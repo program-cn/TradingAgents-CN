@@ -1,0 +1,40 @@
+# Frontend Development Dockerfile for Vue 3 + Vite
+# 开发环境专用，支持热重载
+
+FROM node:22-alpine
+
+# 设置工作目录
+WORKDIR /app/frontend
+
+# 设置时区
+ENV TZ=Asia/Shanghai
+
+# 安装系统依赖（可选，用于某些原生模块）
+# RUN apk add --no-cache python3 make g++
+
+# 启用 Corepack 并使用 Yarn 1.22.22
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
+
+# 复制依赖配置文件
+COPY package.json yarn.lock .yarnrc* ./
+
+# 安装依赖
+# --network-timeout: 增加网络超时时间
+# --frozen-lockfile: 使用 lock 文件确保版本一致
+RUN yarn install --frozen-lockfile --network-timeout 300000
+
+# 复制源码（开发环境会被 volume 挂载覆盖）
+# 这一步是为了确保镜像完整性
+COPY . .
+
+# 暴露 Vite 开发服务器端口
+EXPOSE 5173
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:5173 || exit 1
+
+# 启动 Vite 开发服务器
+# --host 0.0.0.0: 允许外部访问（容器外）
+# --port 5173: 默认端口
+CMD ["yarn", "dev", "--host", "0.0.0.0", "--port", "5173"]
