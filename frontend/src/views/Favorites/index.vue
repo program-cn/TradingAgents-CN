@@ -88,6 +88,14 @@
               <el-icon><Download /></el-icon>
               批量同步数据
             </el-button>
+            <el-button
+              v-if="selectedStocks.length > 0"
+              type="warning"
+              @click="goToBatchAnalysis"
+            >
+              <el-icon><TrendCharts /></el-icon>
+              批量分析 ({{ selectedStocks.length }})
+            </el-button>
             <el-button @click="openTagManager">
               标签管理
             </el-button>
@@ -107,9 +115,10 @@
         v-loading="loading"
         style="width: 100%"
         @selection-change="handleSelectionChange"
+        :default-sort="{ prop: 'added_at', order: 'descending' }"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="stock_code" label="股票代码" width="120">
+        <el-table-column prop="stock_code" label="股票代码" width="120" sortable>
           <template #default="{ row }">
             <el-link type="primary" @click="viewStockDetail(row)">
               {{ row.stock_code }}
@@ -117,31 +126,31 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="stock_name" label="股票名称" width="150" />
-        <el-table-column prop="market" label="市场" width="80">
+        <el-table-column prop="stock_name" label="股票名称" width="150" sortable />
+        <el-table-column prop="market" label="市场" width="80" sortable>
           <template #default="{ row }">
             {{ row.market || 'A股' }}
           </template>
         </el-table-column>
-        <el-table-column prop="board" label="板块" width="100">
+        <el-table-column prop="board" label="板块" width="100" sortable>
           <template #default="{ row }">
             {{ row.board || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="exchange" label="交易所" width="140">
+        <el-table-column prop="exchange" label="交易所" width="140" sortable>
           <template #default="{ row }">
             {{ row.exchange || '-' }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="current_price" label="当前价格" width="100">
+        <el-table-column prop="current_price" label="当前价格" width="100" sortable>
           <template #default="{ row }">
             <span v-if="row.current_price !== null && row.current_price !== undefined">¥{{ formatPrice(row.current_price) }}</span>
             <span v-else>-</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="change_percent" label="涨跌幅" width="100">
+        <el-table-column prop="change_percent" label="涨跌幅" width="100" sortable>
           <template #default="{ row }">
             <span
               v-if="row.change_percent !== null && row.change_percent !== undefined"
@@ -153,7 +162,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="tags" label="标签" width="150">
+        <el-table-column prop="tags" label="标签" width="150" sortable :sort-method="sortByTags">
           <template #default="{ row }">
             <el-tag
               v-for="tag in row.tags"
@@ -168,7 +177,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="added_at" label="添加时间" width="120">
+        <el-table-column prop="added_at" label="添加时间" width="120" sortable>
           <template #default="{ row }">
             {{ formatDate(row.added_at) }}
           </template>
@@ -250,8 +259,8 @@
 
         <el-form-item label="股票名称" prop="stock_name">
           <el-input v-model="addForm.stock_name" placeholder="股票名称" />
-          <div v-if="addForm.market !== 'A股'" style="font-size: 12px; color: #E6A23C; margin-top: 4px;">
-            {{ addForm.market }}不支持自动获取，请手动输入股票名称
+          <div style="font-size: 12px; color: #909399; margin-top: 4px;">
+            输入代码后失焦，将自动填充股票名称
           </div>
         </el-form-item>
 
@@ -507,7 +516,8 @@ import {
   Search,
   Refresh,
   Plus,
-  Download
+  Download,
+  TrendCharts
 } from '@element-plus/icons-vue'
 import { favoritesApi } from '@/api/favorites'
 import { tagsApi } from '@/api/tags'
@@ -896,9 +906,9 @@ const getStockCodeHint = () => {
   if (market === 'A股') {
     return '输入代码后失焦，将自动填充股票名称'
   } else if (market === '港股') {
-    return '港股不支持自动获取名称，请手动输入'
+    return '输入代码后失焦，将自动填充股票名称（港股代码如：01810、0700）'
   } else if (market === '美股') {
-    return '美股不支持自动获取名称，请手动输入'
+    return '输入代码后失焦，将自动填充股票名称（美股代码如：AAPL、TSLA）'
   }
   return ''
 }
@@ -910,14 +920,12 @@ const fetchStockInfo = async () => {
     const symbol = addForm.value.stock_code.trim()
     const market = addForm.value.market
 
-    // 🔥 只有A股支持自动获取股票名称
+    // 🔥 A股：从后台获取股票基础信息
     if (market === 'A股') {
-      // 从后台获取股票基础信息
       const res = await ApiClient.get(`/api/stock-data/basic-info/${symbol}`)
 
       if ((res as any)?.success && (res as any)?.data) {
         const stockInfo = (res as any).data
-        // 自动填充股票名称
         if (stockInfo.name) {
           addForm.value.stock_name = stockInfo.name
           ElMessage.success(`已自动填充股票名称: ${stockInfo.name}`)
@@ -926,7 +934,34 @@ const fetchStockInfo = async () => {
         ElMessage.warning('未找到该股票信息，请手动输入股票名称')
       }
     }
-    // 港股和美股不调用API，用户需要手动输入
+    // 🔥 港股：调用港股基础信息API
+    else if (market === '港股') {
+      const res = await ApiClient.get(`/api/stock-data/foreign-info/HK/${symbol}`)
+
+      if ((res as any)?.success && (res as any)?.data) {
+        const stockInfo = (res as any).data
+        if (stockInfo.name) {
+          addForm.value.stock_name = stockInfo.name
+          ElMessage.success(`已自动填充股票名称: ${stockInfo.name}`)
+        }
+      } else {
+        ElMessage.warning('未找到该港股信息，请手动输入股票名称')
+      }
+    }
+    // 🔥 美股：调用美股基础信息API
+    else if (market === '美股') {
+      const res = await ApiClient.get(`/api/stock-data/foreign-info/US/${symbol}`)
+
+      if ((res as any)?.success && (res as any)?.data) {
+        const stockInfo = (res as any).data
+        if (stockInfo.name) {
+          addForm.value.stock_name = stockInfo.name
+          ElMessage.success(`已自动填充股票名称: ${stockInfo.name}`)
+        }
+      } else {
+        ElMessage.warning('未找到该美股信息，请手动输入股票名称')
+      }
+    }
   } catch (error: any) {
     console.error('获取股票信息失败:', error)
     ElMessage.warning('获取股票信息失败，请手动输入股票名称')
@@ -987,6 +1022,19 @@ const analyzeFavorite = (row: any) => {
   router.push({
     name: 'SingleAnalysis',
     query: { stock: row.stock_code, market: normalizeMarketForAnalysis(row.market || 'A股') }
+  })
+}
+
+// 跳转到批量分析页面
+const goToBatchAnalysis = () => {
+  if (selectedStocks.value.length === 0) {
+    ElMessage.warning('请先选择要分析的股票')
+    return
+  }
+  const stockCodes = selectedStocks.value.map(stock => stock.stock_code).join(',')
+  router.push({
+    path: '/analysis/batch',
+    query: { stocks: stockCodes }
   })
 }
 
@@ -1182,6 +1230,17 @@ const formatPercent = (value: any): string => {
 
 const formatDate = (dateStr: string) => {
   return new Date(dateStr).toLocaleDateString('zh-CN')
+}
+
+// 标签排序方法
+const sortByTags = (a: any, b: any) => {
+  const tagsA = a.tags || []
+  const tagsB = b.tags || []
+  // 按第一个标签名称排序，没有标签的排最后
+  if (tagsA.length === 0 && tagsB.length === 0) return 0
+  if (tagsA.length === 0) return 1
+  if (tagsB.length === 0) return -1
+  return tagsA[0].localeCompare(tagsB[0], 'zh-CN')
 }
 
 // 生命周期

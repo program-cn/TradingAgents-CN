@@ -1,4 +1,4 @@
-version: '3.8'
+#version: '3.8'
 
 # TradingAgents-CN 开发环境配置
 # 用于挂载本地代码，实现热重载开发
@@ -33,29 +33,42 @@ services:
       - TRADINGAGENTS_LOG_LEVEL=DEBUG
     # 🔧 覆盖启动命令，启用热重载
     command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    # 🔗 开发环境暴露端口，允许从宿主机访问
+    ports:
+      - "8000:8000"
 
   # 前端开发配置
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
+    # 使用明确的镜像名称，避免与生产镜像混淆
+    image: tradingagents-frontend-dev:latest
+    container_name: tradingagents-frontend-dev
     volumes:
       # 🎨 挂载前端源码
       - ./frontend/src:/app/frontend/src
       - ./frontend/public:/app/frontend/public
       - ./frontend/index.html:/app/frontend/index.html
       - ./frontend/vite.config.ts:/app/frontend/vite.config.ts
+      # 📚 挂载文档目录（学习中心需要加载 Markdown 文件）
+      - ./docs:/app/docs
       # 📦 不挂载 node_modules（使用容器内的）
       # - ./frontend/node_modules:/app/frontend/node_modules
     environment:
       - NODE_ENV=development
-      - VITE_API_BASE_URL=/api
+      # VITE_API_BASE_URL 设为空，让 Vite 代理处理路径（避免 /api/api 重复）
+      - VITE_API_BASE_URL=
+      - VITE_API_TARGET=http://backend:8000
       # 🔗 后端 WebSocket 地址（用于实时通知）
       - VITE_WS_URL=ws://localhost:8000
     ports:
       - "5173:5173"  # Vite 开发服务器
     # 🚀 覆盖启动命令
     command: yarn dev --host 0.0.0.0
+    # 🔗 加入 Docker 网络，允许访问后端
+    networks:
+      - tradingagents-network
 
   # Nginx 配置（开发环境可选）
   nginx:

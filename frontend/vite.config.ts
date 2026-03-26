@@ -41,7 +41,7 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 3000,
+    port: 5173,  // 与 docker-compose.dev.yml 映射端口一致
     hmr: {
       overlay: false
     },
@@ -51,7 +51,9 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        // Docker 开发环境：使用容器名访问后端
+        // 本地开发：使用 localhost:8000
+        target: process.env.VITE_API_TARGET || 'http://backend:8000',
         changeOrigin: true,
         secure: false,
         ws: true  // 🔥 启用 WebSocket 代理支持

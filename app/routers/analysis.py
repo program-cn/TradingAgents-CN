@@ -800,13 +800,32 @@ async def submit_batch_analysis(
             raise ValueError(f"批量分析最多支持 {MAX_BATCH_SIZE} 个股票，当前提交了 {len(stock_symbols)} 个")
 
         # 为每只股票创建单股分析任务
+        from tradingagents.utils.stock_utils import StockUtils
+
         for i, symbol in enumerate(stock_symbols):
             logger.info(f"📝 [批量分析] 正在创建第 {i+1}/{len(stock_symbols)} 个任务: {symbol}")
+
+            # 🔥 自动识别市场类型
+            stock_market = StockUtils.identify_stock_market(symbol)
+            if stock_market.value == "china_a":
+                inferred_market_type = "A股"
+            elif stock_market.value == "hong_kong":
+                inferred_market_type = "港股"
+            elif stock_market.value == "us":
+                inferred_market_type = "美股"
+            else:
+                inferred_market_type = "A股"  # 默认
+
+            # 如果参数中没有指定市场类型，使用自动识别的结果
+            params = request.parameters.model_copy() if request.parameters else AnalysisParameters()
+            if not params.market_type:
+                params.market_type = inferred_market_type
+                logger.info(f"🔍 [批量分析] 股票 {symbol} 自动识别市场类型: {inferred_market_type}")
 
             single_req = SingleAnalysisRequest(
                 symbol=symbol,
                 stock_code=symbol,  # 兼容字段
-                parameters=request.parameters
+                parameters=params
             )
 
             try:
@@ -828,10 +847,26 @@ async def submit_batch_analysis(
             tasks = []
             for i, symbol in enumerate(stock_symbols):
                 task_id = task_ids[i]
+
+                # 🔥 自动识别市场类型（与创建任务时相同的逻辑）
+                stock_market = StockUtils.identify_stock_market(symbol)
+                if stock_market.value == "china_a":
+                    inferred_market_type = "A股"
+                elif stock_market.value == "hong_kong":
+                    inferred_market_type = "港股"
+                elif stock_market.value == "us":
+                    inferred_market_type = "美股"
+                else:
+                    inferred_market_type = "A股"
+
+                params = request.parameters.model_copy() if request.parameters else AnalysisParameters()
+                if not params.market_type:
+                    params.market_type = inferred_market_type
+
                 single_req = SingleAnalysisRequest(
                     symbol=symbol,
                     stock_code=symbol,
-                    parameters=request.parameters
+                    parameters=params
                 )
 
                 # 创建异步任务

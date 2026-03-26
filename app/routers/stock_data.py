@@ -57,6 +57,76 @@ async def get_stock_basic_info(
         )
 
 
+@router.get("/foreign-info/{market}/{symbol}")
+async def get_foreign_stock_info(
+    market: str,
+    symbol: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    获取港股/美股基础信息
+
+    Args:
+        market: 市场类型 (HK/US)
+        symbol: 股票代码
+
+    Returns:
+        股票基础信息，包含名称
+    """
+    try:
+        from app.services.foreign_stock_service import ForeignStockService
+        from app.core.database import get_mongo_db
+
+        db = get_mongo_db()
+        service = ForeignStockService(db=db)
+
+        if market.upper() == 'HK':
+            # 获取港股基础信息
+            info = await service._get_hk_info(symbol, force_refresh=False)
+            if info:
+                return {
+                    "success": True,
+                    "data": {
+                        "code": symbol,
+                        "name": info.get("name", ""),
+                        "market": "港股",
+                        "exchange": info.get("exchange", "HKG"),
+                        "currency": info.get("currency", "HKD"),
+                        "sector": info.get("sector"),
+                        "industry": info.get("industry")
+                    }
+                }
+        elif market.upper() == 'US':
+            # 获取美股基础信息
+            info = await service._get_us_info(symbol, force_refresh=False)
+            if info:
+                return {
+                    "success": True,
+                    "data": {
+                        "code": symbol,
+                        "name": info.get("name", ""),
+                        "market": "美股",
+                        "exchange": info.get("exchange"),
+                        "currency": info.get("currency", "USD"),
+                        "sector": info.get("sector"),
+                        "industry": info.get("industry")
+                    }
+                }
+
+        return {
+            "success": False,
+            "message": f"未找到股票代码 {symbol} 的基础信息"
+        }
+
+    except Exception as e:
+        import logging
+        logging.getLogger("webapi").error(f"获取港股/美股基础信息失败: {e}")
+        return {
+            "success": False,
+            "message": f"获取基础信息失败: {str(e)}"
+        }
+
+
 @router.get("/quotes/{symbol}", response_model=MarketQuotesResponse)
 async def get_market_quotes(
     symbol: str,

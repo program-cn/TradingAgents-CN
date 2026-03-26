@@ -557,6 +557,7 @@ class AKShareProvider(BaseStockDataProvider):
         批量获取股票实时行情（优化版：一次获取全市场快照）
 
         优先使用新浪财经接口（更稳定），失败时回退到东方财富接口
+        🔥 支持港股：港股代码单独使用 stock_hk_daily 接口
 
         Args:
             codes: 股票代码列表
@@ -567,13 +568,40 @@ class AKShareProvider(BaseStockDataProvider):
         if not self.connected:
             return {}
 
-        # 重试逻辑
+        # 🔥 分离 A 股和港股代码
+        a_codes = []
+        hk_codes = []
+        for code in codes:
+            if self._is_hk_stock(code):
+                hk_codes.append(code)
+            else:
+                a_codes.append(code)
+
+        quotes_map = {}
+
+        # 🔥 处理港股（单独获取）
+        if hk_codes:
+            logger.info(f"📊 单独获取 {len(hk_codes)} 只港股行情...")
+            for hk_code in hk_codes:
+                try:
+                    hk_quote = await self._get_hk_stock_quotes(hk_code)
+                    if hk_quote:
+                        quotes_map[hk_code] = hk_quote
+                except Exception as e:
+                    logger.warning(f"⚠️ 获取港股 {hk_code} 失败: {e}")
+            logger.info(f"✅ 港股行情获取完成: {len(quotes_map)}/{len(hk_codes)}")
+
+        # 如果没有 A 股代码，直接返回港股数据
+        if not a_codes:
+            return quotes_map
+
+        # 重试逻辑（A 股）
         max_retries = 2
         retry_delay = 1  # 秒
 
         for attempt in range(max_retries):
             try:
-                logger.debug(f"📊 批量获取 {len(codes)} 只股票的实时行情... (尝试 {attempt + 1}/{max_retries})")
+                logger.debug(f"📊 批量获取 {len(a_codes)} 只A股实时行情... (尝试 {attempt + 1}/{max_retries})")
 
                 # 优先使用新浪财经接口（更稳定，不容易被封）
                 def fetch_spot_data_sina():
@@ -601,16 +629,17 @@ class AKShareProvider(BaseStockDataProvider):
                     if attempt < max_retries - 1:
                         await asyncio.sleep(retry_delay)
                         continue
-                    return {}
+                    # 🔥 返回已获取的港股数据
+                    return quotes_map
 
-                # 构建代码到行情的映射
-                quotes_map = {}
-                codes_set = set(codes)
+                # 构建代码到行情的映射（在已有港股数据基础上追加）
+                # quotes_map 已包含港股数据，不要重置
+                codes_set = set(a_codes)
 
                 # 构建代码映射表（支持带前缀的代码匹配）
                 # 例如：sh600000 -> 600000, sz000001 -> 000001
                 code_mapping = {}
-                for code in codes:
+                for code in a_codes:
                     code_mapping[code] = code  # 原始代码
                     # 添加可能的前缀变体
                     for prefix in ['sh', 'sz', 'bj']:
@@ -678,12 +707,13 @@ class AKShareProvider(BaseStockDataProvider):
                         }
 
                 found_count = len(quotes_map)
-                missing_count = len(codes) - found_count
-                logger.debug(f"✅ 批量获取完成: 找到 {found_count} 只, 未找到 {missing_count} 只")
+                missing_count = len(a_codes) + len(hk_codes) - found_count
+                logger.debug(f"✅ 批量获取完成: 找到 {found_count} 只 (A股+港股), 未找到 {missing_count} 只")
 
                 # 记录未找到的股票
                 if missing_count > 0:
-                    missing_codes = codes_set - set(quotes_map.keys())
+                    all_codes_set = set(a_codes) | set(hk_codes)
+                    missing_codes = all_codes_set - set(quotes_map.keys())
                     if missing_count <= 10:
                         logger.debug(f"⚠️ 未找到行情的股票: {list(missing_codes)}")
                     else:
@@ -697,15 +727,89 @@ class AKShareProvider(BaseStockDataProvider):
                     await asyncio.sleep(retry_delay)
                 else:
                     logger.error(f"❌ 批量获取实时行情失败，已达最大重试次数: {e}")
-                    return {}
+                    # 🔥 返回已获取的港股数据
+                    return quotes_map
+
+    def _is_hk_stock(self, code: str) -> bool:
+        """判断是否为港股代码"""
+        # 港股代码特征：5位数字，通常以0开头
+        code = str(code).zfill(5)
+        # 港股代码范围：00001-99999，但主要是 0xxxx, 1xxxx, 2xxxx, 3xxxx
+        # 排除 A 股代码：A股是 6 位数字，以 0, 3, 6 开头
+        if len(str(code).lstrip('0')) <= 5 and len(str(code)) == 5:
+            # 5位代码，可能是港股
+            return True
+        return False
+
+    async def _get_hk_stock_quotes(self, code: str) -> Optional[Dict[str, Any]]:
+        """获取港股行情（使用历史数据接口获取最近一天的数据）"""
+        try:
+            logger.info(f"📈 使用 stock_hk_daily 接口获取港股 {code} 行情...")
+
+            # 港股代码补齐为5位
+            hk_code = str(code).zfill(5)
+
+            def fetch_hk_daily():
+                return self.ak.stock_hk_daily(symbol=hk_code, adjust='')
+
+            df = await asyncio.to_thread(fetch_hk_daily)
+
+            if df is None or df.empty:
+                logger.warning(f"⚠️ 未找到港股 {code} 的行情数据")
+                return None
+
+            # 取最新一天的数据
+            latest = df.iloc[-1]
+
+            from datetime import datetime, timezone, timedelta
+            cn_tz = timezone(timedelta(hours=8))
+            now_cn = datetime.now(cn_tz)
+
+            quotes = {
+                "code": code,
+                "symbol": code,
+                "name": f"港股{code}",
+                "price": float(latest.get('close', 0)),
+                "close": float(latest.get('close', 0)),
+                "current_price": float(latest.get('close', 0)),
+                "change": None,
+                "change_percent": None,
+                "pct_chg": None,
+                "volume": float(latest.get('volume', 0)),
+                "amount": None,
+                "open": float(latest.get('open', 0)),
+                "high": float(latest.get('high', 0)),
+                "low": float(latest.get('low', 0)),
+                "pre_close": float(df.iloc[-2].get('close', 0)) if len(df) > 1 else float(latest.get('open', 0)),
+                "trade_date": str(latest.get('date', '')),
+                "updated_at": now_cn.isoformat(),
+                "full_symbol": f"{code}.HK",
+                "market_info": {"market_type": "HK", "exchange": "HKEX", "exchange_name": "香港交易所"},
+                "data_source": "akshare",
+                "last_sync": datetime.now(timezone.utc),
+                "sync_status": "success"
+            }
+
+            # 计算涨跌幅
+            if quotes["pre_close"] and quotes["pre_close"] > 0:
+                quotes["change"] = quotes["close"] - quotes["pre_close"]
+                quotes["change_percent"] = round((quotes["change"] / quotes["pre_close"]) * 100, 2)
+                quotes["pct_chg"] = quotes["change_percent"]
+
+            logger.info(f"✅ 港股 {code} 行情获取成功: 收盘价={quotes['close']}")
+            return quotes
+
+        except Exception as e:
+            logger.error(f"❌ 获取港股 {code} 行情失败: {e}")
+            return None
 
     async def get_stock_quotes(self, code: str) -> Optional[Dict[str, Any]]:
         """
         获取单个股票实时行情
 
-        🔥 策略：使用 stock_bid_ask_em 接口获取单个股票的实时行情报价
-        - 优点：只获取单个股票数据，速度快，不浪费资源
-        - 适用场景：手动同步单个股票
+        🔥 策略：
+        - A股：使用 stock_bid_ask_em 接口获取实时行情
+        - 港股：使用 stock_hk_daily 接口获取最近一天的行情
 
         Args:
             code: 股票代码
@@ -715,6 +819,10 @@ class AKShareProvider(BaseStockDataProvider):
         """
         if not self.connected:
             return None
+
+        # 🔥 判断是否为港股
+        if self._is_hk_stock(code):
+            return await self._get_hk_stock_quotes(code)
 
         try:
             logger.info(f"📈 使用 stock_bid_ask_em 接口获取 {code} 实时行情...")

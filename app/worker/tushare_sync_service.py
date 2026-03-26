@@ -311,8 +311,33 @@ class TushareSyncService:
                 logger.info("📡 调用 rt_k 批量接口获取全市场实时行情...")
                 quotes_map = await self.provider.get_realtime_quotes_batch()
 
+                # 🔥 如果 rt_k 返回空（非交易时间），回退到 AKShare 或使用历史行情
                 if not quotes_map:
-                    logger.warning("⚠️ 未获取到实时行情数据")
+                    logger.warning("⚠️ Tushare rt_k 未返回数据（可能是非交易时间）")
+                    
+                    # 如果指定了股票列表，尝试使用 AKShare 回退
+                    if symbols:
+                        logger.info("🔄 尝试回退到 AKShare 获取行情...")
+                        try:
+                            from app.worker.akshare_sync_service import get_akshare_sync_service
+                            akshare_service = await get_akshare_sync_service()
+                            if akshare_service:
+                                akshare_result = await akshare_service.sync_realtime_quotes(
+                                    symbols=symbols,
+                                    force=force
+                                )
+                                stats["switched_to_akshare"] = True
+                                stats["success_count"] = akshare_result.get("success_count", 0)
+                                stats["error_count"] = akshare_result.get("error_count", 0)
+                                stats["total_processed"] = akshare_result.get("total_processed", 0)
+                                stats["errors"] = akshare_result.get("errors", [])
+                                stats["end_time"] = datetime.utcnow()
+                                stats["duration"] = (stats["end_time"] - stats["start_time"]).total_seconds()
+                                logger.info(f"✅ AKShare 回退完成: 成功 {stats['success_count']} 只")
+                                return stats
+                        except Exception as e:
+                            logger.warning(f"⚠️ AKShare 回退失败: {e}")
+                    
                     return stats
 
                 logger.info(f"✅ 获取到 {len(quotes_map)} 只股票的实时行情")
