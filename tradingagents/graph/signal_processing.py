@@ -193,15 +193,30 @@ class SignalProcessor:
                         target_price = None
                         logger.warning(f"🔍 [SignalProcessor] 价格转换失败，设置为None")
 
+                # 尝试从文本中提取当前价格
+                current_price = self._extract_current_price(full_signal)
+                
+                # 计算止盈止损价格
+                risk_score = float(decision_data.get('risk_score', 0.5))
+                stop_loss_tp = self._calculate_stop_loss_take_profit(
+                    target_price=target_price,
+                    action=action,
+                    current_price=current_price,
+                    risk_score=risk_score
+                )
+
                 result = {
                     'action': action,
                     'target_price': target_price,
+                    'stop_loss_price': stop_loss_tp['stop_loss_price'],
+                    'take_profit_price': stop_loss_tp['take_profit_price'],
                     'confidence': float(decision_data.get('confidence', 0.7)),
-                    'risk_score': float(decision_data.get('risk_score', 0.5)),
+                    'risk_score': risk_score,
                     'reasoning': decision_data.get('reasoning', '基于综合分析的投资建议')
                 }
                 logger.info(f"🔍 [SignalProcessor] 处理结果: {result}",
                            extra={'action': result['action'], 'target_price': result['target_price'],
+                                 'stop_loss': result['stop_loss_price'], 'take_profit': result['take_profit_price'],
                                  'confidence': result['confidence'], 'stock_symbol': stock_symbol})
                 return result
             else:
@@ -237,6 +252,36 @@ class SignalProcessor:
                     break
                 except ValueError:
                     continue
+
+    def _extract_current_price(self, text: str) -> float:
+        """
+        从文本中提取当前价格
+        
+        Args:
+            text: 分析报告文本
+            
+        Returns:
+            float: 当前价格，如果未找到返回 None
+        """
+        import re
+        
+        current_price_patterns = [
+            r'当前价[格位]?[：:]?\s*[¥\$]?(\d+(?:\.\d+)?)',
+            r'现价[：:]?\s*[¥\$]?(\d+(?:\.\d+)?)',
+            r'股价[：:]?\s*[¥\$]?(\d+(?:\.\d+)?)',
+            r'最新价[：:]?\s*[¥\$]?(\d+(?:\.\d+)?)',
+            r'收盘价[：:]?\s*[¥\$]?(\d+(?:\.\d+)?)',
+        ]
+        
+        for pattern in current_price_patterns:
+            match = re.search(pattern, text)
+            if match:
+                try:
+                    return float(match.group(1))
+                except ValueError:
+                    continue
+        
+        return None
         
         # 提取涨跌幅信息
         percentage_patterns = [
@@ -317,9 +362,20 @@ class SignalProcessor:
             is_china = True  # 默认假设是A股，实际应该从上下文获取
             target_price = self._smart_price_estimation(text, action, is_china)
 
+        # 提取当前价格并计算止盈止损
+        current_price = self._extract_current_price(text)
+        stop_loss_tp = self._calculate_stop_loss_take_profit(
+            target_price=target_price,
+            action=action,
+            current_price=current_price,
+            risk_score=0.5
+        )
+
         return {
             'action': action,
             'target_price': target_price,
+            'stop_loss_price': stop_loss_tp['stop_loss_price'],
+            'take_profit_price': stop_loss_tp['take_profit_price'],
             'confidence': 0.7,
             'risk_score': 0.5,
             'reasoning': '基于综合分析的投资建议'
@@ -330,7 +386,73 @@ class SignalProcessor:
         return {
             'action': '持有',
             'target_price': None,
+            'stop_loss_price': None,
+            'take_profit_price': None,
             'confidence': 0.5,
             'risk_score': 0.5,
             'reasoning': '输入数据无效，默认持有建议'
+        }
+
+    def _calculate_stop_loss_take_profit(self, target_price: float, action: str, 
+                                          current_price: float = None, 
+                                          risk_score: float = 0.5) -> dict:
+        """
+        计算止盈止损价格
+        
+        Args:
+            target_price: 目标价格
+            action: 操作类型（买入/持有/卖出）
+            current_price: 当前价格（如果有的话）
+            risk_score: 风险评分（0-1）
+            
+        Returns:
+            dict: 包含止盈止损价格
+        """
+        stop_loss_price = None
+        take_profit_price = None
+        
+        if action == '买入' and target_price:
+            # 买入建议：设置止盈止损
+            base_price = current_price if current_price else target_price * 0.9
+            
+            # 止损价格：根据风险评分调整止损幅度
+            # 风险越高，止损越宽（避免频繁止损）
+            # 风险越低，止损越紧（保护利润）
+            if risk_score > 0.7:  # 高风险
+                stop_loss_ratio = 0.15  # 15% 止损
+            elif risk_score > 0.4:  # 中等风险
+                stop_loss_ratio = 0.10  # 10% 止损
+            else:  # 低风险
+                stop_loss_ratio = 0.07  # 7% 止损
+            
+            stop_loss_price = round(base_price * (1 - stop_loss_ratio), 2)
+            
+            # 止盈价格：目标价格或当前价格的涨幅
+            take_profit_price = target_price
+            
+            logger.info(f"💰 [止盈止损] 买入建议 - 止损: {stop_loss_price}, 止盈: {take_profit_price}, "
+                       f"止损比例: {stop_loss_ratio*100:.0f}%")
+            
+        elif action == '持有' and current_price:
+            # 持有建议：根据风险评分调整止盈止损
+            if risk_score > 0.6:  # 高风险持有
+                stop_loss_ratio = 0.12
+            else:
+                stop_loss_ratio = 0.08
+            
+            stop_loss_price = round(current_price * (1 - stop_loss_ratio), 2)
+            take_profit_price = round(current_price * 1.15, 2)  # 15% 止盈
+            
+            logger.info(f"💰 [止盈止损] 持有建议 - 止损: {stop_loss_price}, 止盈: {take_profit_price}")
+            
+        elif action == '卖出':
+            # 卖出建议：不需要止盈止损
+            stop_loss_price = None
+            take_profit_price = target_price
+            
+            logger.info(f"💰 [止盈止损] 卖出建议 - 无需设置止损")
+        
+        return {
+            'stop_loss_price': stop_loss_price,
+            'take_profit_price': take_profit_price
         }

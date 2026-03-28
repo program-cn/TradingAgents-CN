@@ -545,6 +545,15 @@
                           <span class="label">参考价格:</span>
                           <span class="value">{{ analysisResults.decision.target_price }}</span>
                         </div>
+                        <!-- 🔥 止盈止损展示 -->
+                        <div class="metric-item" v-if="analysisResults.decision.stop_loss_price">
+                          <span class="label" style="color: #F56C6C;">止损价:</span>
+                          <span class="value" style="color: #F56C6C; font-weight: bold;">¥{{ analysisResults.decision.stop_loss_price }}</span>
+                        </div>
+                        <div class="metric-item" v-if="analysisResults.decision.take_profit_price">
+                          <span class="label" style="color: #67C23A;">止盈价:</span>
+                          <span class="value" style="color: #67C23A; font-weight: bold;">¥{{ analysisResults.decision.take_profit_price }}</span>
+                        </div>
                         <div class="metric-item">
                           <span class="label">模型置信度:</span>
                           <span class="value">{{ (analysisResults.decision.confidence * 100).toFixed(1) }}%</span>
@@ -712,7 +721,7 @@ import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
 import { configApi } from '@/api/config'
 import DeepModelSelector from '@/components/DeepModelSelector.vue'
-import { ANALYSTS, convertAnalystNamesToIds } from '@/constants/analysts'
+import { ANALYSTS, convertAnalystNamesToIds, DEFAULT_ANALYSTS, DEFAULT_ANALYSTS_A_STOCK } from '@/constants/analysts'
 import { marked } from 'marked'
 import { recommendModels, validateModels, type ModelRecommendationResponse } from '@/api/modelCapabilities'
 import { validateStockCode, getStockCodeFormatHelp, getStockCodeExamples } from '@/utils/stockValidator'
@@ -807,7 +816,7 @@ const analysisForm = reactive<AnalysisForm>({
   market: 'A股',
   analysisDate: new Date(),
   researchDepth: 3, // 默认选中3级标准分析（推荐），将在 onMounted 中从用户偏好加载
-  selectedAnalysts: ['市场分析师', '基本面分析师'], // 将在 onMounted 中从用户偏好加载
+  selectedAnalysts: DEFAULT_ANALYSTS_A_STOCK, // A股默认包含机构分析师，将在 onMounted 中从用户偏好加载
   includeSentiment: true,
   includeRisk: true,
   language: 'zh-CN'
@@ -847,6 +856,20 @@ const onMarketChange = () => {
   } else {
     // 显示新市场的格式提示
     stockCodeHelp.value = getStockCodeFormatHelp(analysisForm.market)
+  }
+
+  // 🆕 根据市场类型动态调整分析师选择
+  if (analysisForm.market === 'A股') {
+    // A股市场：确保机构分析师被选中
+    if (!analysisForm.selectedAnalysts.includes('机构分析师')) {
+      analysisForm.selectedAnalysts.push('机构分析师')
+    }
+  } else {
+    // 非A股市场：移除机构分析师（仅支持A股）
+    const index = analysisForm.selectedAnalysts.indexOf('机构分析师')
+    if (index > -1) {
+      analysisForm.selectedAnalysts.splice(index, 1)
+    }
   }
 }
 
@@ -1262,11 +1285,12 @@ const getAnalysisReports = (data: any) => {
 
   // 定义报告映射（按照完整的分析流程顺序）
   const reportMappings = [
-    // 分析师团队 (4个)
+    // 分析师团队 (5个)
     { key: 'market_report', title: '📈 市场技术分析', category: '分析师团队' },
     { key: 'sentiment_report', title: '💭 市场情绪分析', category: '分析师团队' },
     { key: 'news_report', title: '📰 新闻事件分析', category: '分析师团队' },
     { key: 'fundamentals_report', title: '💰 基本面分析', category: '分析师团队' },
+    { key: 'institutional_report', title: '🏦 机构分析（北向/龙虎榜）', category: '分析师团队' },
 
     // 研究团队 (3个)
     { key: 'bull_researcher', title: '🐂 多头研究员', category: '研究团队' },
@@ -1876,28 +1900,83 @@ const updateAnalysisSteps = (status: any) => {
   console.log('📋 步骤状态更新完成:', statusSummary)
 }
 
+// 模型设置缓存 Key
+const MODEL_SETTINGS_CACHE_KEY = 'trading_analysis_model_settings'
+
+// 保存模型设置到 localStorage
+const saveModelSettingsToCache = () => {
+  try {
+    const cacheData = {
+      quickAnalysisModel: modelSettings.value.quickAnalysisModel,
+      deepAnalysisModel: modelSettings.value.deepAnalysisModel,
+      timestamp: Date.now()
+    }
+    localStorage.setItem(MODEL_SETTINGS_CACHE_KEY, JSON.stringify(cacheData))
+    console.log('💾 模型设置已保存:', cacheData)
+  } catch (error) {
+    console.error('保存模型设置失败:', error)
+  }
+}
+
+// 从 localStorage 恢复模型设置
+const restoreModelSettingsFromCache = (): boolean => {
+  try {
+    const cached = localStorage.getItem(MODEL_SETTINGS_CACHE_KEY)
+    if (!cached) return false
+
+    const cacheData = JSON.parse(cached)
+    // 检查是否过期（7天）
+    if (Date.now() - cacheData.timestamp > 7 * 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(MODEL_SETTINGS_CACHE_KEY)
+      console.log('🗑️ 模型设置缓存已过期')
+      return false
+    }
+
+    if (cacheData.quickAnalysisModel && cacheData.deepAnalysisModel) {
+      modelSettings.value.quickAnalysisModel = cacheData.quickAnalysisModel
+      modelSettings.value.deepAnalysisModel = cacheData.deepAnalysisModel
+      console.log('📦 从缓存恢复模型设置:', cacheData)
+      return true
+    }
+    return false
+  } catch (error) {
+    console.error('恢复模型设置失败:', error)
+    return false
+  }
+}
+
 // 初始化模型设置
 const initializeModelSettings = async () => {
   try {
-    // 获取默认模型
-    const defaultModels = await configApi.getDefaultModels()
-    modelSettings.value.quickAnalysisModel = defaultModels.quick_analysis_model
-    modelSettings.value.deepAnalysisModel = defaultModels.deep_analysis_model
-
     // 获取所有可用的模型列表
     const llmConfigs = await configApi.getLLMConfigs()
     availableModels.value = llmConfigs.filter((config: any) => config.enabled)
 
+    // 尝试从 localStorage 恢复上次的选择
+    const restored = restoreModelSettingsFromCache()
+
+    if (!restored) {
+      // 如果没有缓存，使用后端默认模型
+      const defaultModels = await configApi.getDefaultModels()
+      modelSettings.value.quickAnalysisModel = defaultModels.quick_analysis_model
+      modelSettings.value.deepAnalysisModel = defaultModels.deep_analysis_model
+    }
+
+    // 验证模型是否在可用列表中
+    const availableModelNames = availableModels.value.map(m => m.model_name)
+    if (!availableModelNames.includes(modelSettings.value.quickAnalysisModel)) {
+      modelSettings.value.quickAnalysisModel = availableModels.value[0]?.model_name || 'qwen-turbo'
+    }
+    if (!availableModelNames.includes(modelSettings.value.deepAnalysisModel)) {
+      modelSettings.value.deepAnalysisModel = availableModels.value[0]?.model_name || 'qwen-max'
+    }
+
     console.log('✅ 加载模型配置成功:', {
       quick: modelSettings.value.quickAnalysisModel,
       deep: modelSettings.value.deepAnalysisModel,
-      available: availableModels.value.length
+      available: availableModels.value.length,
+      restored
     })
-    console.log('🔍 可用模型详细信息:', availableModels.value.map(m => ({
-      model_name: m.model_name,
-      model_display_name: m.model_display_name,
-      provider: m.provider
-    })))
   } catch (error) {
     console.error('加载默认模型配置失败:', error)
     modelSettings.value.quickAnalysisModel = 'qwen-turbo'
@@ -2177,6 +2256,8 @@ watch(() => analysisForm.researchDepth, () => {
 // 监听模型选择变化
 watch([() => modelSettings.value.quickAnalysisModel, () => modelSettings.value.deepAnalysisModel], () => {
   checkModelSuitability()
+  // 保存用户选择到 localStorage
+  saveModelSettingsToCache()
 })
 
 // 页面初始化

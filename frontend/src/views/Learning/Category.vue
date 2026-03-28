@@ -87,6 +87,16 @@ const categoryMap: Record<string, any> = {
     title: '常见问题',
     icon: '❓',
     description: '快速找到常见问题的答案'
+  },
+  'fundamental-analysis': {
+    title: '基本面分析',
+    icon: '📈',
+    description: '学习企业年报分析、财报解读和风险评估方法'
+  },
+  'stock-screening': {
+    title: '选股教程',
+    icon: '🔍',
+    description: '学习选股逻辑、策略方法和重要指标分析'
   }
 }
 
@@ -213,6 +223,118 @@ const articlesDatabase: Record<string, any[]> = {
       views: 2876,
       difficulty: 'success',
       difficultyText: '入门'
+    }
+  ],
+  'fundamental-analysis': [
+    {
+      id: 'annual-report-guide',
+      title: '企业年报分析入门指南',
+      description: '系统学习企业年报的结构组成、分析框架和关键指标解读方法',
+      readTime: '15分钟',
+      views: 1567,
+      difficulty: 'success',
+      difficultyText: '入门'
+    },
+    {
+      id: 'financial-statements-analysis',
+      title: '财报核心关注点详解',
+      description: '深入掌握资产负债表、利润表、现金流量表的分析要点和预警信号',
+      readTime: '20分钟',
+      views: 1234,
+      difficulty: 'warning',
+      difficultyText: '进阶'
+    },
+    {
+      id: 'swot-analysis',
+      title: '企业优势与劣势分析方法',
+      description: '学习护城河理论、SWOT分析框架，掌握竞争优势评估方法',
+      readTime: '18分钟',
+      views: 987,
+      difficulty: 'warning',
+      difficultyText: '进阶'
+    },
+    {
+      id: 'risk-assessment',
+      title: '企业风险评估框架',
+      description: '全面了解行业风险、经营风险、财务风险、管理风险的识别与评估',
+      readTime: '20分钟',
+      views: 876,
+      difficulty: 'danger',
+      difficultyText: '高级'
+    }
+  ],
+  'stock-screening': [
+    {
+      id: 'screening-basics',
+      title: '股票筛选入门指南',
+      description: '了解股票筛选的基本概念、操作流程和常见筛选策略',
+      readTime: '12分钟',
+      views: 2134,
+      difficulty: 'success',
+      difficultyText: '入门'
+    },
+    {
+      id: 'valuation-metrics',
+      title: '估值指标详解',
+      description: '深入理解PE、PB、PS、EV/EBITDA等估值指标的计算和应用',
+      readTime: '18分钟',
+      views: 1876,
+      difficulty: 'warning',
+      difficultyText: '进阶'
+    },
+    {
+      id: 'financial-metrics',
+      title: '财务指标详解',
+      description: '掌握ROE、ROA、毛利率、净利率等核心财务指标的分析方法',
+      readTime: '20分钟',
+      views: 1654,
+      difficulty: 'warning',
+      difficultyText: '进阶'
+    },
+    {
+      id: 'technical-metrics',
+      title: '技术指标详解',
+      description: '学习涨跌幅、成交量、均线、RSI、KDJ、MACD等技术指标',
+      readTime: '18分钟',
+      views: 1432,
+      difficulty: 'warning',
+      difficultyText: '进阶'
+    },
+    {
+      id: 'industry-valuation',
+      title: '行业估值参考指南',
+      description: '不同行业的PE估值区间、合理判断逻辑和动态变化因素',
+      readTime: '22分钟',
+      views: 1123,
+      difficulty: 'warning',
+      difficultyText: '进阶'
+    },
+    {
+      id: 'macro-policy-analysis',
+      title: '宏观政策与行业分析',
+      description: '货币政策、财政政策、产业政策对各行业的影响分析',
+      readTime: '20分钟',
+      views: 1087,
+      difficulty: 'danger',
+      difficultyText: '高级'
+    },
+    {
+      id: 'economic-cycle-strategy',
+      title: '经济周期与选股策略',
+      description: '通胀通缩环境、经济周期各阶段的选股逻辑和配置策略',
+      readTime: '25分钟',
+      views: 1456,
+      difficulty: 'danger',
+      difficultyText: '高级'
+    },
+    {
+      id: 'screening-strategies',
+      title: '选股策略进阶',
+      description: '系统学习价值投资、成长投资、GARP等多种选股策略',
+      readTime: '25分钟',
+      views: 987,
+      difficulty: 'danger',
+      difficultyText: '高级'
     }
   ]
 }

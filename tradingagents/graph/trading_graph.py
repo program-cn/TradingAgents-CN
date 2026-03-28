@@ -195,7 +195,7 @@ class TradingAgentsGraph:
 
     def __init__(
         self,
-        selected_analysts=["market", "social", "news", "fundamentals"],
+        selected_analysts=["market", "social", "news", "fundamentals", "institutional"],
         debug=False,
         config: Dict[str, Any] = None,
     ):
@@ -799,7 +799,7 @@ class TradingAgentsGraph:
             getattr(self, 'react_llm', None),
         )
 
-        self.propagator = Propagator()
+        self.propagator = Propagator(max_recur_limit=self.config.get("max_recur_limit", 200))
         self.reflector = Reflector(self.quick_thinking_llm)
         self.signal_processor = SignalProcessor(self.quick_thinking_llm)
 
@@ -865,6 +865,14 @@ class TradingAgentsGraph:
                     # 中国市场工具（备用）
                     self.toolkit.get_china_stock_data,
                     self.toolkit.get_china_fundamentals,
+                ]
+            ),
+            # 🔥 机构分析工具节点（北向资金、基金、龙虎榜）
+            "institutional": ToolNode(
+                [
+                    # 从机构分析工具模块导入工具
+                    # 注意：这些工具是通过 institutional_analyst.py 动态绑定的
+                    # ToolNode 会执行这些工具
                 ]
             ),
         }

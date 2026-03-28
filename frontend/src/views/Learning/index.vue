@@ -85,6 +85,26 @@
           <el-tag type="info" size="small">1篇文章</el-tag>
         </el-card>
       </el-col>
+
+      <!-- 基本面分析 -->
+      <el-col :xs="24" :sm="12" :md="8" :lg="6">
+        <el-card class="category-card" shadow="hover" @click="navigateTo('fundamental-analysis')">
+          <div class="card-icon">📈</div>
+          <h3>基本面分析</h3>
+          <p>企业年报分析、财报解读和风险评估方法</p>
+          <el-tag type="warning" size="small">4篇文章</el-tag>
+        </el-card>
+      </el-col>
+
+      <!-- 选股教程 -->
+      <el-col :xs="24" :sm="12" :md="8" :lg="6">
+        <el-card class="category-card" shadow="hover" @click="navigateTo('stock-screening')">
+          <div class="card-icon">🔍</div>
+          <h3>选股教程</h3>
+          <p>选股逻辑、策略方法和重要指标分析</p>
+          <el-tag type="info" size="small">8篇文章</el-tag>
+        </el-card>
+      </el-col>
     </el-row>
 
     <!-- 推荐文章 -->
@@ -141,6 +161,22 @@ const recommendedArticles = ref<RecommendedArticle[]>([
     title: '多智能体系统详解',
     description: '了解本工具如何通过多个AI智能体协作分析股票',
     readTime: '15分钟'
+  },
+  {
+    id: 'screening-basics',
+    category: '选股教程',
+    tagType: 'info',
+    title: '股票筛选入门指南',
+    description: '了解股票筛选的基本概念、操作流程和常见策略',
+    readTime: '12分钟'
+  },
+  {
+    id: 'valuation-metrics',
+    category: '选股教程',
+    tagType: 'warning',
+    title: '估值指标详解',
+    description: '深入理解PE、PB等估值指标的计算和应用方法',
+    readTime: '18分钟'
   },
   {
     id: 'best-practices',

@@ -272,9 +272,14 @@ class Settings(BaseSettings):
 
     # ===== 新闻数据同步服务配置 =====
     NEWS_SYNC_ENABLED: bool = Field(default=True)
-    NEWS_SYNC_CRON: str = Field(default="0 */2 * * *")  # 每2小时
+    NEWS_SYNC_CRON: str = Field(default="0 */2 * * *")  # 每2小时（自选股新闻）
     NEWS_SYNC_HOURS_BACK: int = Field(default=24)
     NEWS_SYNC_MAX_PER_SOURCE: int = Field(default=50)
+
+    # ===== 市场快讯同步配置 =====
+    MARKET_NEWS_SYNC_ENABLED: bool = Field(default=True)
+    MARKET_NEWS_SYNC_CRON: str = Field(default="*/30 * * * *")  # 每30分钟
+    MARKET_NEWS_MAX_COUNT: int = Field(default=100)  # 每次同步最大新闻数
 
     @property
     def is_production(self) -> bool:

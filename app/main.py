@@ -28,7 +28,7 @@ from pathlib import Path
 from app.core.config import settings
 from app.core.database import init_db, close_db
 from app.core.logging_config import setup_logging
-from app.routers import auth_db as auth, analysis, screening, queue, sse, health, favorites, config, reports, database, operation_logs, tags, tushare_init, akshare_init, baostock_init, historical_data, multi_period_sync, financial_data, news_data, social_media, internal_messages, usage_statistics, model_capabilities, cache, logs
+from app.routers import auth_db as auth, analysis, screening, queue, sse, health, favorites, config, reports, database, operation_logs, tags, tushare_init, akshare_init, baostock_init, historical_data, multi_period_sync, financial_data, news_data, social_media, internal_messages, usage_statistics, model_capabilities, cache, logs, market_overview, market_index
 from app.routers import sync as sync_router, multi_source_sync
 from app.routers import stocks as stocks_router
 from app.routers import stock_data as stock_data_router
@@ -569,6 +569,39 @@ async def lifespan(app: FastAPI):
         else:
             logger.info(f"📰 新闻数据同步已配置（仅自选股）: {settings.NEWS_SYNC_CRON}")
 
+        # 市场快讯同步任务
+        async def run_market_news_sync():
+            """运行市场快讯同步任务"""
+            try:
+                logger.info("📰 开始市场快讯同步...")
+                from app.worker.news_data_sync_service import get_news_data_sync_service
+                sync_service = await get_news_data_sync_service()
+
+                # 使用 AKShare 同步市场新闻
+                result = await sync_service.sync_market_news_akshare(
+                    max_news=settings.MARKET_NEWS_MAX_COUNT
+                )
+                logger.info(
+                    f"✅ 市场快讯同步完成: "
+                    f"处理{result.total_processed}条, "
+                    f"成功保存{result.successful_saves}条, "
+                    f"耗时{result.duration_seconds:.2f}秒"
+                )
+            except Exception as e:
+                logger.error(f"❌ 市场快讯同步失败: {e}", exc_info=True)
+
+        scheduler.add_job(
+            run_market_news_sync,
+            CronTrigger.from_crontab(settings.MARKET_NEWS_SYNC_CRON, timezone=settings.TIMEZONE),
+            id="market_news_sync",
+            name="市场快讯同步"
+        )
+        if not settings.MARKET_NEWS_SYNC_ENABLED:
+            scheduler.pause_job("market_news_sync")
+            logger.info(f"⏸️ 市场快讯同步已添加但暂停: {settings.MARKET_NEWS_SYNC_CRON}")
+        else:
+            logger.info(f"📰 市场快讯同步已配置: {settings.MARKET_NEWS_SYNC_CRON}")
+
         scheduler.start()
 
         # 设置调度器实例到服务中，以便API可以管理任务
@@ -690,6 +723,8 @@ app.include_router(reports.router, tags=["reports"])
 app.include_router(screening.router, prefix="/api/screening", tags=["screening"])
 app.include_router(queue.router, prefix="/api/queue", tags=["queue"])
 app.include_router(favorites.router, prefix="/api", tags=["favorites"])
+app.include_router(market_overview.router, tags=["market-overview"])
+app.include_router(market_index.router, prefix="/api", tags=["market-index"])
 app.include_router(stocks_router.router, prefix="/api", tags=["stocks"])
 app.include_router(multi_market_stocks_router.router, prefix="/api", tags=["multi-market"])
 app.include_router(stock_data_router.router, tags=["stock-data"])

@@ -16,7 +16,7 @@ DEFAULT_CONFIG = {
     # Debate and discussion settings
     "max_debate_rounds": 1,
     "max_risk_discuss_rounds": 1,
-    "max_recur_limit": 100,
+    "max_recur_limit": 200,  # LangGraph 递归限制，增加到200以避免复杂分析超限
     # Tool settings - 从环境变量读取，提供默认值
     "online_tools": os.getenv("ONLINE_TOOLS_ENABLED", "false").lower() == "true",
     "online_news": os.getenv("ONLINE_NEWS_ENABLED", "true").lower() == "true", 

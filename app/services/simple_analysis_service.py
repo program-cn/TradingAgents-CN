@@ -1532,6 +1532,7 @@ class SimpleAnalysisService:
                     'sentiment_report',
                     'news_report',
                     'fundamentals_report',
+                    'institutional_report',  # 🔥 机构分析报告
                     'investment_plan',
                     'trader_investment_plan',
                     'final_trade_decision'
@@ -2405,6 +2406,7 @@ class SimpleAnalysisService:
                         'sentiment_report',
                         'news_report',
                         'fundamentals_report',
+                        'institutional_report',  # 🔥 机构分析报告
                         'investment_plan',
                         'trader_investment_plan',
                         'final_trade_decision'

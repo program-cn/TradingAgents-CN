@@ -438,70 +438,149 @@ class NewsDataSyncService:
     ) -> NewsSyncStats:
         """
         同步市场新闻
-        
+
         Args:
             data_sources: 数据源列表
             hours_back: 回溯小时数
             max_news_per_source: 每个数据源最大新闻数量
-            
+
         Returns:
             同步统计信息
         """
         stats = NewsSyncStats()
-        
+
         try:
             self.logger.info("📰 开始同步市场新闻...")
-            
+
             if data_sources is None:
                 data_sources = ["realtime"]
-            
+
             news_service = await self._get_news_service()
             all_news = []
-            
+
             # 实时市场新闻
             if "realtime" in data_sources:
                 try:
                     aggregator = await self._get_realtime_aggregator()
-                    
+
                     # 获取市场新闻（不指定股票代码）
                     news_items = aggregator.get_realtime_stock_news(
                         None, hours_back, max_news_per_source
                     )
-                    
+
                     if news_items:
                         for news_item in news_items:
                             standardized = self._standardize_realtime_news(news_item, None)
                             if standardized:
                                 all_news.append(standardized)
-                        
+
                         stats.sources_used.append("realtime")
                         self.logger.info(f"✅ 市场新闻获取成功: {len(all_news)}条")
-                        
+
                 except Exception as e:
                     self.logger.error(f"❌ 市场新闻获取失败: {e}")
-            
+
             # 保存新闻数据
             if all_news:
                 stats.total_processed = len(all_news)
-                
+
                 # 去重处理
                 unique_news = self._deduplicate_news(all_news)
                 stats.duplicate_skipped = len(all_news) - len(unique_news)
-                
+
                 # 批量保存
                 saved_count = await news_service.save_news_data(
                     unique_news, "market_news", "CN"
                 )
                 stats.successful_saves = saved_count
                 stats.failed_saves = len(unique_news) - saved_count
-                
+
                 self.logger.info(f"💾 市场新闻同步完成: {saved_count}条保存成功")
-            
+
             stats.end_time = datetime.utcnow()
             return stats
-            
+
         except Exception as e:
             self.logger.error(f"❌ 同步市场新闻失败: {e}")
+            stats.end_time = datetime.utcnow()
+            return stats
+
+    async def sync_market_news_akshare(self, max_news: int = 100) -> NewsSyncStats:
+        """
+        使用 AKShare 同步市场新闻（财经快讯）
+
+        Args:
+            max_news: 最大新闻数量
+
+        Returns:
+            同步统计信息
+        """
+        stats = NewsSyncStats()
+
+        try:
+            self.logger.info("📰 开始同步市场新闻（AKShare）...")
+
+            news_service = await self._get_news_service()
+
+            # 获取 AKShare 提供者
+            provider = await self._get_akshare_provider()
+
+            if not provider.is_available():
+                self.logger.warning("⚠️ AKShare提供者不可用")
+                return stats
+
+            # 获取市场新闻（symbol=None 表示市场新闻）
+            news_data = await provider.get_stock_news(symbol=None, limit=max_news)
+
+            if not news_data:
+                self.logger.warning("⚠️ 未获取到市场新闻数据")
+                stats.end_time = datetime.utcnow()
+                return stats
+
+            stats.total_processed = len(news_data)
+            stats.sources_used.append("akshare")
+
+            # 标准化并保存新闻
+            all_news = []
+            for news in news_data:
+                standardized = {
+                    "symbol": None,
+                    "title": news.get("title", ""),
+                    "content": news.get("content", ""),
+                    "summary": news.get("summary", ""),
+                    "url": news.get("url", ""),
+                    "source": news.get("source", "CCTV财经"),
+                    "author": news.get("author", ""),
+                    "publish_time": news.get("publish_time"),
+                    "category": news.get("category", "market_news"),
+                    "sentiment": news.get("sentiment", "neutral"),
+                    "importance": news.get("importance", "medium"),
+                    "keywords": news.get("keywords", []),
+                    "data_source": "akshare_market"
+                }
+                all_news.append(standardized)
+
+            # 去重处理
+            unique_news = self._deduplicate_news(all_news)
+            stats.duplicate_skipped = len(all_news) - len(unique_news)
+
+            # 批量保存
+            saved_count = await news_service.save_news_data(
+                unique_news, "akshare_market", "CN"
+            )
+            stats.successful_saves = saved_count
+            stats.failed_saves = len(unique_news) - saved_count
+
+            self.logger.info(
+                f"💾 市场新闻同步完成: {saved_count}条保存成功, "
+                f"跳过{stats.duplicate_skipped}条重复"
+            )
+
+            stats.end_time = datetime.utcnow()
+            return stats
+
+        except Exception as e:
+            self.logger.error(f"❌ 同步市场新闻失败: {e}", exc_info=True)
             stats.end_time = datetime.utcnow()
             return stats
 

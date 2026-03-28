@@ -185,15 +185,17 @@ async def get_latest_news(
     symbol: Optional[str] = Query(None, description="股票代码，为空则获取所有新闻"),
     limit: int = Query(10, description="返回数量限制"),
     hours_back: int = Query(24, description="回溯小时数"),
+    prioritize_importance: bool = Query(True, description="是否优先显示重要新闻"),
     current_user: dict = Depends(get_current_user)
 ):
     """
-    获取最新新闻
+    获取最新新闻（智能选择：优先显示重要新闻）
     
     Args:
         symbol: 股票代码，为空则获取所有新闻
         limit: 返回数量限制
         hours_back: 回溯小时数
+        prioritize_importance: 是否优先显示重要新闻
         
     Returns:
         dict: 最新新闻列表
@@ -201,11 +203,12 @@ async def get_latest_news(
     try:
         service = await get_news_data_service()
         
-        # 获取最新新闻
+        # 获取最新新闻（智能选择）
         news_list = await service.get_latest_news(
             symbol=symbol,
             limit=limit,
-            hours_back=hours_back
+            hours_back=hours_back,
+            prioritize_importance=prioritize_importance
         )
         
         return ok(data={

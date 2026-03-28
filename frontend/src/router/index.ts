@@ -115,6 +115,28 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/market',
+    name: 'Market',
+    component: () => import('@/layouts/BasicLayout.vue'),
+    meta: {
+      title: '市场概览',
+      icon: 'TrendCharts',
+      requiresAuth: true,
+      transition: 'slide-up'
+    },
+    children: [
+      {
+        path: '',
+        name: 'MarketOverview',
+        component: () => import('@/views/Market/Overview.vue'),
+        meta: {
+          title: '市场概览',
+          requiresAuth: true
+        }
+      }
+    ]
+  },
+  {
     path: '/learning',
     name: 'Learning',
     component: () => import('@/layouts/BasicLayout.vue'),

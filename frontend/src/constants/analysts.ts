@@ -34,13 +34,22 @@ export const ANALYSTS: Analyst[] = [
     name: '社媒分析师',
     description: '分析社交媒体情绪、投资者心理和舆论导向',
     icon: 'ChatDotRound'
+  },
+  {
+    id: 'institutional',
+    name: '机构分析师',
+    description: '分析北向资金、基金持股、龙虎榜等机构动向（仅A股）',
+    icon: 'OfficeBuilding'
   }
 ]
 
 // 分析师名称列表（用于表单选项）
 export const ANALYST_NAMES = ANALYSTS.map(analyst => analyst.name)
 
-// 默认选中的分析师
+// 默认选中的分析师（A股市场）
+export const DEFAULT_ANALYSTS_A_STOCK = ['市场分析师', '基本面分析师', '机构分析师']
+
+// 默认选中的分析师（非A股市场）
 export const DEFAULT_ANALYSTS = ['市场分析师', '基本面分析师']
 
 // 根据名称获取分析师信息
@@ -63,7 +72,8 @@ export const ANALYST_NAME_TO_ID_MAP: Record<string, string> = {
   '市场分析师': 'market',
   '基本面分析师': 'fundamentals',
   '新闻分析师': 'news',
-  '社媒分析师': 'social'
+  '社媒分析师': 'social',
+  '机构分析师': 'institutional'
 }
 
 // 将中文分析师名称转换为英文ID

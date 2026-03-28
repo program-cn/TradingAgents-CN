@@ -51,6 +51,9 @@
       </div>
     </el-card>
 
+    <!-- 市场指数 -->
+    <MarketIndexCard style="margin-top: 24px;" />
+
     <!-- 主要功能区域 -->
     <el-row :gutter="24" class="main-content">
       <!-- 左侧：快速操作 -->
@@ -147,7 +150,12 @@
         <!-- 市场快讯 -->
         <el-card class="market-news-card" style="margin-top: 24px;">
           <template #header>
-            <span>市场快讯</span>
+            <div class="card-header">
+              <span>市场快讯</span>
+              <el-button type="text" size="small" @click="loadMarketNews">
+                <el-icon><Refresh /></el-icon> 刷新
+              </el-button>
+            </div>
           </template>
           <div v-if="marketNews.length > 0" class="news-list">
             <div
@@ -156,8 +164,33 @@
               class="news-item"
               @click="openNewsUrl(news.url)"
             >
+              <div class="news-header">
+                <el-tag
+                  v-if="news.importance === 'high'"
+                  type="danger"
+                  size="small"
+                  effect="dark"
+                  class="importance-tag"
+                >重要</el-tag>
+                <el-tag
+                  v-else-if="news.importance === 'medium'"
+                  type="warning"
+                  size="small"
+                  effect="plain"
+                  class="importance-tag"
+                >一般</el-tag>
+                <el-tag
+                  v-if="news.category && news.category !== 'general'"
+                  :type="getCategoryTagType(news.category)"
+                  size="small"
+                  class="category-tag"
+                >{{ getCategoryLabel(news.category) }}</el-tag>
+              </div>
               <div class="news-title">{{ news.title }}</div>
-              <div class="news-time">{{ formatTime(news.time) }}</div>
+              <div class="news-footer">
+                <span class="news-source" v-if="news.source">{{ news.source }}</span>
+                <span class="news-time">{{ formatTime(news.time) }}</span>
+              </div>
             </div>
           </div>
           <div v-else class="empty-state">
@@ -310,11 +343,13 @@ import {
   List,
   ArrowRight,
   InfoFilled,
-  Reading
+  Reading,
+  Refresh
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { AnalysisTask, AnalysisStatus } from '@/types/analysis'
 import MultiSourceSyncCard from '@/components/Dashboard/MultiSourceSyncCard.vue'
+import MarketIndexCard from '@/components/Dashboard/MarketIndexCard.vue'
 import { favoritesApi } from '@/api/favorites'
 import { analysisApi } from '@/api/analysis'
 import { newsApi } from '@/api/news'
@@ -439,6 +474,26 @@ const openNewsUrl = (url?: string) => {
   }
 }
 
+const getCategoryTagType = (category: string): 'primary' | 'success' | 'info' | 'warning' | 'danger' => {
+  const typeMap: Record<string, 'primary' | 'success' | 'info' | 'warning' | 'danger'> = {
+    'company_announcement': 'primary',
+    'policy_news': 'danger',
+    'market_news': 'success',
+    'research_report': 'warning'
+  }
+  return typeMap[category] || 'info'
+}
+
+const getCategoryLabel = (category: string): string => {
+  const labelMap: Record<string, string> = {
+    'company_announcement': '公告',
+    'policy_news': '政策',
+    'market_news': '市场',
+    'research_report': '研报'
+  }
+  return labelMap[category] || category
+}
+
 const getStatusType = (status: string | AnalysisStatus): 'success' | 'info' | 'warning' | 'danger' => {
   const statusMap: Record<string, 'success' | 'info' | 'warning' | 'danger'> = {
     pending: 'info',
@@ -537,11 +592,14 @@ const loadMarketNews = async () => {
 
     if (response.success && response.data) {
       marketNews.value = response.data.news.map((item: any) => ({
-        id: item.id || item.title,
+        id: item.id || item._id || item.title,
         title: item.title,
         time: item.publish_time,
         url: item.url,
-        source: item.source
+        source: item.source,
+        importance: item.importance,
+        category: item.category,
+        sentiment: item.sentiment
       }))
     }
   } catch (error) {
@@ -817,11 +875,18 @@ onMounted(async () => {
   }
 
   .market-news-card {
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
     .news-list {
       .news-item {
         padding: 12px 0;
         cursor: pointer;
         border-bottom: 1px solid var(--el-border-color-lighter);
+        transition: all 0.2s ease;
 
         &:last-child {
           border-bottom: none;
@@ -834,16 +899,55 @@ onMounted(async () => {
           border-radius: 4px;
         }
 
+        .news-header {
+          display: flex;
+          gap: 6px;
+          margin-bottom: 6px;
+
+          .importance-tag {
+            font-size: 11px;
+            padding: 0 6px;
+            height: 18px;
+            line-height: 16px;
+          }
+
+          .category-tag {
+            font-size: 11px;
+            padding: 0 6px;
+            height: 18px;
+            line-height: 16px;
+          }
+        }
+
         .news-title {
           font-size: 14px;
           color: var(--el-text-color-primary);
-          margin-bottom: 4px;
-          line-height: 1.4;
+          margin-bottom: 6px;
+          line-height: 1.5;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
 
-        .news-time {
-          font-size: 12px;
-          color: var(--el-text-color-placeholder);
+        .news-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+
+          .news-source {
+            font-size: 12px;
+            color: var(--el-color-primary);
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          .news-time {
+            font-size: 12px;
+            color: var(--el-text-color-placeholder);
+          }
         }
       }
     }

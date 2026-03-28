@@ -15,7 +15,7 @@ from tradingagents.agents.utils.agent_states import (
 class Propagator:
     """Handles state initialization and propagation through the graph."""
 
-    def __init__(self, max_recur_limit=100):
+    def __init__(self, max_recur_limit=200):
         """Initialize with configuration parameters."""
         self.max_recur_limit = max_recur_limit
 
@@ -49,6 +49,7 @@ class Propagator:
             "fundamentals_report": "",
             "sentiment_report": "",
             "news_report": "",
+            "institutional_report": "",  # 🔥 机构分析报告
         }
 
     def get_graph_args(self, use_progress_callback: bool = False) -> Dict[str, Any]:

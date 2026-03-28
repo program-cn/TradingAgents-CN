@@ -1424,44 +1424,46 @@ class AKShareProvider(BaseStockDataProvider):
                 self.logger.debug("📰 获取AKShare市场新闻")
 
                 try:
-                    # 获取财经新闻
-                    news_df = await asyncio.to_thread(
-                        ak.news_cctv,
-                        limit=limit
-                    )
+                    # 获取财经新闻 (news_cctv 不接受 limit 参数)
+                    news_df = await asyncio.to_thread(ak.news_cctv)
 
                     if news_df is not None and not news_df.empty:
                         news_list = []
 
                         for _, row in news_df.iterrows():
-                            title = str(row.get('title', '') or row.get('标题', ''))
-                            content = str(row.get('content', '') or row.get('内容', ''))
-                            summary = str(row.get('brief', '') or row.get('摘要', ''))
+                            # CCTV 新闻列名: ['date', 'title', 'content']
+                            title = str(row.get('title', '') or '')
+                            content = str(row.get('content', '') or '')
+                            date_str = str(row.get('date', '') or '')
 
                             news_item = {
                                 "title": title,
                                 "content": content,
-                                "summary": summary,
-                                "url": str(row.get('url', '') or row.get('链接', '')),
-                                "source": str(row.get('source', '') or row.get('来源', '') or 'CCTV财经'),
-                                "author": str(row.get('author', '') or ''),
-                                "publish_time": self._parse_news_time(row.get('time', '') or row.get('时间', '')),
-                                "category": self._classify_news(content, title),
+                                "summary": content[:200] + "..." if len(content) > 200 else content,
+                                "url": "",  # CCTV 新闻无 URL
+                                "source": "CCTV财经",
+                                "author": "",
+                                "publish_time": self._parse_news_time(date_str),
+                                "category": "market_news",
                                 "sentiment": self._analyze_news_sentiment(content, title),
                                 "sentiment_score": self._calculate_sentiment_score(content, title),
                                 "keywords": self._extract_keywords(content, title),
                                 "importance": self._assess_news_importance(content, title),
-                                "data_source": "akshare"
+                                "data_source": "akshare_cctv"
                             }
 
                             if news_item["title"]:
                                 news_list.append(news_item)
 
+                        # 应用 limit
+                        if limit and len(news_list) > limit:
+                            news_list = news_list[:limit]
+
                         self.logger.info(f"✅ AKShare市场新闻获取成功: {len(news_list)} 条")
                         return news_list
 
                 except Exception as e:
-                    self.logger.debug(f"CCTV新闻获取失败: {e}")
+                    self.logger.error(f"CCTV新闻获取失败: {e}")
 
                 return []
 

@@ -183,6 +183,7 @@
                 <el-checkbox label="基本面分析师">基本面分析师</el-checkbox>
                 <el-checkbox label="新闻分析师">新闻分析师</el-checkbox>
                 <el-checkbox label="社媒分析师">社媒分析师</el-checkbox>
+                <el-checkbox label="机构分析师">机构分析师（仅A股）</el-checkbox>
               </el-checkbox-group>
             </el-form-item>
 

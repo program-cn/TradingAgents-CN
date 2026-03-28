@@ -8,7 +8,6 @@ from bson import ObjectId
 
 from app.core.database import get_mongo_db
 from app.models.user import FavoriteStock
-from app.services.quotes_service import get_quotes_service
 
 
 class FavoritesService:
@@ -77,10 +76,11 @@ class FavoritesService:
         codes = [it.get("stock_code") for it in items if it.get("stock_code")]
         if codes:
             try:
-                # 🔥 获取数据源优先级配置
-                from app.core.unified_config import UnifiedConfigManager
-                config = UnifiedConfigManager()
-                data_source_configs = await config.get_data_source_configs_async()
+                # 🔥 使用全局配置实例（避免每次创建新实例导致缓存失效）
+                from app.core.unified_config import unified_config
+
+                # 使用同步方法获取数据源配置（更快，有内存缓存）
+                data_source_configs = unified_config.get_data_source_configs()
 
                 # 提取启用的数据源，按优先级排序
                 enabled_sources = [
@@ -96,7 +96,7 @@ class FavoritesService:
                 # 从 stock_basic_info 获取板块信息（只查询优先级最高的数据源）
                 basic_info_coll = db["stock_basic_info"]
                 cursor = basic_info_coll.find(
-                    {"code": {"$in": codes}, "source": preferred_source},  # 🔥 添加数据源筛选
+                    {"code": {"$in": codes}, "source": preferred_source},
                     {"code": 1, "sse": 1, "market": 1, "_id": 0}
                 )
                 basic_docs = await cursor.to_list(length=None)
@@ -106,9 +106,7 @@ class FavoritesService:
                     code = it.get("stock_code")
                     basic = basic_map.get(code)
                     if basic:
-                        # market 字段表示板块（主板、创业板、科创板等）
                         it["board"] = basic.get("market", "-")
-                        # sse 字段表示交易所（上海证券交易所、深圳证券交易所等）
                         it["exchange"] = basic.get("sse", "-")
                     else:
                         it["board"] = "-"
@@ -119,7 +117,8 @@ class FavoritesService:
                     it["board"] = "-"
                     it["exchange"] = "-"
 
-        # 批量获取行情（优先使用入库的 market_quotes，30秒更新）
+        # 批量获取行情（仅使用入库的 market_quotes，不再调用在线 API）
+        # 🔥 性能优化：移除在线行情兜底，避免全市场快照 API 调用导致延迟
         if codes:
             try:
                 coll = db["market_quotes"]
@@ -132,19 +131,8 @@ class FavoritesService:
                     if q:
                         it["current_price"] = q.get("close")
                         it["change_percent"] = q.get("pct_chg")
-                # 兜底：对未命中的代码使用在线源补齐（可选）
-                missing = [c for c in codes if c not in quotes_map]
-                if missing:
-                    try:
-                        quotes_online = await get_quotes_service().get_quotes(missing)
-                        for it in items:
-                            code = it.get("stock_code")
-                            if it.get("current_price") is None:
-                                q2 = quotes_online.get(code, {}) if quotes_online else {}
-                                it["current_price"] = q2.get("close")
-                                it["change_percent"] = q2.get("pct_chg")
-                    except Exception:
-                        pass
+                # 🔥 移除在线行情兜底，改为依赖定时同步的 market_quotes 数据
+                # 如果用户需要最新行情，可以点击"同步实时行情"按钮
             except Exception:
                 # 查询失败时保持占位 None，避免影响基础功能
                 pass

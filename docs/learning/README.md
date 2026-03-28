@@ -66,6 +66,12 @@ docs/learning/
     ├── analysis-issues.md     # 分析问题
     ├── llm-issues.md          # LLM相关问题
     └── troubleshooting.md     # 故障排除
+│
+└── 09-fundamental-analysis/   # 基本面分析（企业年报分析）
+    ├── annual-report-guide.md           # 企业年报分析入门指南
+    ├── financial-statements-analysis.md # 财报核心关注点详解
+    ├── swot-analysis.md                 # 企业优势与劣势分析方法
+    └── risk-assessment.md               # 企业风险评估框架
 ```
 
 ## 📝 内容规范
@@ -128,6 +134,14 @@ docs/learning/
 4. 实战教程 → 高级功能
 5. 源项目与论文 → 学术论文研读
 
+### 基本面分析路径
+
+1. 基本面分析 → 企业年报分析入门指南
+2. 基本面分析 → 财报核心关注点详解
+3. 基本面分析 → 企业优势与劣势分析方法
+4. 基本面分析 → 企业风险评估框架
+5. AI分析股票原理 → 基本面分析（系统应用）
+
 ## 🤝 贡献指南
 
 欢迎贡献学习内容！请遵循以下步骤：
@@ -174,5 +188,21 @@ docs/learning/
 ### 常见问题
 - ✅ [常见问题解答](./08-faq/general-questions.md)
 
-**进度统计**：已完成 8 篇核心文档，涵盖从入门到进阶的主要内容。
+### 基本面分析（企业年报分析）
+- ✅ [企业年报分析入门指南](./09-fundamental-analysis/annual-report-guide.md)
+- ✅ [财报核心关注点详解](./09-fundamental-analysis/financial-statements-analysis.md)
+- ✅ [企业优势与劣势分析方法](./09-fundamental-analysis/swot-analysis.md)
+- ✅ [企业风险评估框架](./09-fundamental-analysis/risk-assessment.md)
+
+### 选股教程
+- ✅ [股票筛选入门指南](./10-stock-screening/screening-basics.md)
+- ✅ [估值指标详解](./10-stock-screening/valuation-metrics.md)
+- ✅ [财务指标详解](./10-stock-screening/financial-metrics.md)
+- ✅ [技术指标详解](./10-stock-screening/technical-metrics.md)
+- ✅ [行业估值参考指南](./10-stock-screening/industry-valuation.md)
+- ✅ [宏观政策与行业分析](./10-stock-screening/macro-policy-analysis.md)
+- ✅ [经济周期与选股策略](./10-stock-screening/economic-cycle-strategy.md)
+- ✅ [选股策略进阶](./10-stock-screening/screening-strategies.md)
+
+**进度统计**：已完成 20 篇核心文档，涵盖从入门到进阶的主要内容。
 

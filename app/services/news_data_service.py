@@ -6,6 +6,7 @@ from typing import Optional, List, Dict, Any, Union
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 import logging
+import re
 from pymongo import ReplaceOne
 from pymongo.errors import BulkWriteError
 from bson import ObjectId
@@ -13,6 +14,16 @@ from bson import ObjectId
 from app.core.database import get_database
 
 logger = logging.getLogger(__name__)
+
+# HTML 标签清理正则表达式
+HTML_TAG_PATTERN = re.compile(r'<[^>]+>')
+
+
+def clean_html_tags(text: str) -> str:
+    """移除 HTML 标签，保留纯文本"""
+    if not text:
+        return ""
+    return HTML_TAG_PATTERN.sub('', text)
 
 
 def convert_objectid_to_str(data: Union[Dict, List[Dict]]) -> Union[Dict, List[Dict]]:
@@ -369,10 +380,10 @@ class NewsDataService:
             "market": market,
             "symbols": symbols,
             
-            # 新闻内容
-            "title": news_data.get("title", ""),
-            "content": news_data.get("content", ""),
-            "summary": news_data.get("summary", ""),
+            # 新闻内容（清理 HTML 标签）
+            "title": clean_html_tags(news_data.get("title", "")),
+            "content": clean_html_tags(news_data.get("content", "")),
+            "summary": clean_html_tags(news_data.get("summary", "")),
             "url": news_data.get("url", ""),
             "source": news_data.get("source", ""),
             "author": news_data.get("author", ""),
@@ -535,6 +546,12 @@ class NewsDataService:
             # 🔧 转换 ObjectId 为字符串，避免 JSON 序列化错误
             results = convert_objectid_to_str(results)
 
+            # 🔧 清理 HTML 标签（处理旧数据）
+            for r in results:
+                r["title"] = clean_html_tags(r.get("title", ""))
+                r["content"] = clean_html_tags(r.get("content", ""))
+                r["summary"] = clean_html_tags(r.get("summary", ""))
+
             if results:
                 self.logger.info(f"   前3条预览:")
                 for i, r in enumerate(results[:3], 1):
@@ -553,30 +570,89 @@ class NewsDataService:
         self,
         symbol: str = None,
         limit: int = 10,
-        hours_back: int = 24
+        hours_back: int = 24,
+        prioritize_importance: bool = True
     ) -> List[Dict[str, Any]]:
         """
-        获取最新新闻
-        
+        获取最新新闻（智能选择：优先显示重要新闻）
+
         Args:
             symbol: 股票代码，为空则获取所有新闻
             limit: 返回数量限制
             hours_back: 回溯小时数
-            
+            prioritize_importance: 是否优先显示重要新闻
+
         Returns:
             最新新闻列表
         """
-        start_time = datetime.utcnow() - timedelta(hours=hours_back)
-        
-        params = NewsQueryParams(
-            symbol=symbol,
-            start_time=start_time,
-            limit=limit,
-            sort_by="publish_time",
-            sort_order=-1
-        )
-        
-        return await self.query_news(params)
+        try:
+            collection = self._get_collection()
+            start_time = datetime.utcnow() - timedelta(hours=hours_back)
+
+            self.logger.info(f"🔍 [get_latest_news] 开始查询最新新闻")
+            self.logger.info(f"   参数: symbol={symbol}, limit={limit}, hours_back={hours_back}, prioritize={prioritize_importance}")
+
+            # 构建查询条件
+            query = {"publish_time": {"$gte": start_time}}
+            if symbol:
+                query["symbol"] = symbol
+
+            # 先统计总数
+            total_count = await collection.count_documents(query)
+            self.logger.info(f"   数据库中符合时间条件的总记录数: {total_count}")
+
+            if prioritize_importance:
+                # 智能选择：按重要性权重排序
+                # importance: high=3, medium=2, low=1, 无=0
+                pipeline = [
+                    {"$match": query},
+                    {"$addFields": {
+                        "importance_weight": {
+                            "$switch": {
+                                "branches": [
+                                    {"case": {"$eq": ["$importance", "high"]}, "then": 3},
+                                    {"case": {"$eq": ["$importance", "medium"]}, "then": 2},
+                                    {"case": {"$eq": ["$importance", "low"]}, "then": 1}
+                                ],
+                                "default": 0
+                            }
+                        }
+                    }},
+                    {"$sort": {
+                        "importance_weight": -1,  # 先按重要性降序
+                        "publish_time": -1        # 再按时间降序
+                    }},
+                    {"$limit": limit}
+                ]
+
+                cursor = collection.aggregate(pipeline)
+                results = await cursor.to_list(length=None)
+            else:
+                # 传统方式：只按时间排序
+                cursor = collection.find(query).sort("publish_time", -1).limit(limit)
+                results = await cursor.to_list(length=None)
+
+            self.logger.info(f"   查询返回: {len(results)} 条记录")
+
+            # 转换 ObjectId 为字符串
+            results = convert_objectid_to_str(results)
+
+            # 清理 HTML 标签
+            for r in results:
+                r["title"] = clean_html_tags(r.get("title", ""))
+                r["content"] = clean_html_tags(r.get("content", ""))
+                r["summary"] = clean_html_tags(r.get("summary", ""))
+
+            if results:
+                self.logger.info(f"   前3条预览:")
+                for i, r in enumerate(results[:3], 1):
+                    self.logger.info(f"      {i}. importance={r.get('importance')}, title={r.get('title', 'N/A')[:40]}...")
+
+            return results
+
+        except Exception as e:
+            self.logger.error(f"❌ 获取最新新闻失败: {e}", exc_info=True)
+            return []
     
     async def get_news_statistics(
         self,
@@ -745,6 +821,12 @@ class NewsDataService:
 
             # 🔧 转换 ObjectId 为字符串，避免 JSON 序列化错误
             results = convert_objectid_to_str(results)
+
+            # 🔧 清理 HTML 标签（处理旧数据）
+            for r in results:
+                r["title"] = clean_html_tags(r.get("title", ""))
+                r["content"] = clean_html_tags(r.get("content", ""))
+                r["summary"] = clean_html_tags(r.get("summary", ""))
 
             self.logger.info(f"🔍 全文搜索返回 {len(results)} 条结果")
             return results

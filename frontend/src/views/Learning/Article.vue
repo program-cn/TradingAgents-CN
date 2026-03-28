@@ -93,7 +93,21 @@ const registry: Record<string, ArticleInfo> = {
   'getting-started': { title: '快速入门教程（外链）', externalUrl: 'https://mp.weixin.qq.com/s/uAk4RevdJHMuMvlqpdGUEw', category: '实战教程', categoryType: 'success', readTime: '10分钟' },
   // 使用指南（试用版）外链
   'usage-guide-preview': { title: '使用指南（试用版）', externalUrl: 'https://mp.weixin.qq.com/s/ppsYiBncynxlsfKFG8uEbw', category: '实战教程', categoryType: 'success', readTime: '15分钟' },
-  'general-questions': { title: '常见问题解答', loader: () => import('../../../../docs/learning/08-faq/general-questions.md?raw'), category: '常见问题', categoryType: 'info', readTime: '15分钟' }
+  'general-questions': { title: '常见问题解答', loader: () => import('../../../../docs/learning/08-faq/general-questions.md?raw'), category: '常见问题', categoryType: 'info', readTime: '15分钟' },
+  // 基本面分析文章
+  'annual-report-guide': { title: '企业年报分析入门指南', loader: () => import('../../../../docs/learning/09-fundamental-analysis/annual-report-guide.md?raw'), category: '基本面分析', categoryType: 'warning', readTime: '15分钟' },
+  'financial-statements-analysis': { title: '财报核心关注点详解', loader: () => import('../../../../docs/learning/09-fundamental-analysis/financial-statements-analysis.md?raw'), category: '基本面分析', categoryType: 'warning', readTime: '20分钟' },
+  'swot-analysis': { title: '企业优势与劣势分析方法', loader: () => import('../../../../docs/learning/09-fundamental-analysis/swot-analysis.md?raw'), category: '基本面分析', categoryType: 'warning', readTime: '18分钟' },
+  'risk-assessment': { title: '企业风险评估框架', loader: () => import('../../../../docs/learning/09-fundamental-analysis/risk-assessment.md?raw'), category: '基本面分析', categoryType: 'danger', readTime: '20分钟' },
+  // 选股教程文章
+  'screening-basics': { title: '股票筛选入门指南', loader: () => import('../../../../docs/learning/10-stock-screening/screening-basics.md?raw'), category: '选股教程', categoryType: 'info', readTime: '12分钟' },
+  'valuation-metrics': { title: '估值指标详解', loader: () => import('../../../../docs/learning/10-stock-screening/valuation-metrics.md?raw'), category: '选股教程', categoryType: 'warning', readTime: '18分钟' },
+  'financial-metrics': { title: '财务指标详解', loader: () => import('../../../../docs/learning/10-stock-screening/financial-metrics.md?raw'), category: '选股教程', categoryType: 'warning', readTime: '20分钟' },
+  'technical-metrics': { title: '技术指标详解', loader: () => import('../../../../docs/learning/10-stock-screening/technical-metrics.md?raw'), category: '选股教程', categoryType: 'warning', readTime: '18分钟' },
+  'industry-valuation': { title: '行业估值参考指南', loader: () => import('../../../../docs/learning/10-stock-screening/industry-valuation.md?raw'), category: '选股教程', categoryType: 'warning', readTime: '22分钟' },
+  'macro-policy-analysis': { title: '宏观政策与行业分析', loader: () => import('../../../../docs/learning/10-stock-screening/macro-policy-analysis.md?raw'), category: '选股教程', categoryType: 'danger', readTime: '20分钟' },
+  'economic-cycle-strategy': { title: '经济周期与选股策略', loader: () => import('../../../../docs/learning/10-stock-screening/economic-cycle-strategy.md?raw'), category: '选股教程', categoryType: 'danger', readTime: '25分钟' },
+  'screening-strategies': { title: '选股策略进阶', loader: () => import('../../../../docs/learning/10-stock-screening/screening-strategies.md?raw'), category: '选股教程', categoryType: 'danger', readTime: '25分钟' }
 }
 
 // 文章顺序用于上一页/下一页
@@ -109,7 +123,21 @@ const articleOrder = [
   'TradingAgents_论文中文版',
   'getting-started',
   'usage-guide-preview',
-  'general-questions'
+  'general-questions',
+  // 基本面分析系列
+  'annual-report-guide',
+  'financial-statements-analysis',
+  'swot-analysis',
+  'risk-assessment',
+  // 选股教程系列
+  'screening-basics',
+  'valuation-metrics',
+  'financial-metrics',
+  'technical-metrics',
+  'industry-valuation',
+  'macro-policy-analysis',
+  'economic-cycle-strategy',
+  'screening-strategies'
 ]
 
 // 当前文章数据

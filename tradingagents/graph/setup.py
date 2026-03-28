@@ -49,7 +49,7 @@ class GraphSetup:
         self.react_llm = react_llm
 
     def setup_graph(
-        self, selected_analysts=["market", "social", "news", "fundamentals"]
+        self, selected_analysts=["market", "social", "news", "fundamentals", "institutional"]
     ):
         """Set up and compile the agent workflow graph.
 
@@ -135,6 +135,16 @@ class GraphSetup:
             )
             delete_nodes["fundamentals"] = create_msg_delete()
             tool_nodes["fundamentals"] = self.tool_nodes["fundamentals"]
+
+        # 🔥 机构分析师（北向资金、基金、龙虎榜）- A股特色
+        if "institutional" in selected_analysts:
+            from tradingagents.agents.analysts.institutional_analyst import create_institutional_analyst
+            logger.info(f"🏦 [机构分析师] 添加机构分析节点")
+            analyst_nodes["institutional"] = create_institutional_analyst(
+                self.quick_thinking_llm, self.toolkit
+            )
+            delete_nodes["institutional"] = create_msg_delete()
+            tool_nodes["institutional"] = self.tool_nodes.get("institutional", self.tool_nodes["market"])
 
         # Create researcher and manager nodes
         bull_researcher_node = create_bull_researcher(
