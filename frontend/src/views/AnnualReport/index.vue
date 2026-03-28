@@ -343,10 +343,128 @@
               </el-table>
             </el-card>
 
-            <!-- 财务指标详情 -->
+            <!-- 五维度财务指标分析卡片 -->
+            <el-card shadow="never" class="five-dimension-card" v-if="analysisResult.financial_data">
+              <template #header>
+                <div class="five-dimension-header">
+                  <span>五维度财务指标分析</span>
+                  <el-tag type="primary" size="small">核心分析</el-tag>
+                </div>
+              </template>
+              
+              <!-- 一、每股指标 -->
+              <div class="dimension-section">
+                <h4 class="dimension-title">
+                  <span class="dimension-icon">📊</span>
+                  一、每股指标
+                  <span class="dimension-desc">反映每股股票的盈利和净资产情况</span>
+                </h4>
+                <el-row :gutter="16">
+                  <el-col :span="6" v-for="item in perShareMetrics" :key="item.key">
+                    <div class="metric-item" :class="item.status">
+                      <div class="metric-name">{{ item.name }}</div>
+                      <div class="metric-value">{{ item.value }}</div>
+                      <div class="metric-analysis">{{ item.analysis }}</div>
+                    </div>
+                  </el-col>
+                </el-row>
+              </div>
+              
+              <!-- 二、盈利能力 -->
+              <div class="dimension-section">
+                <h4 class="dimension-title">
+                  <span class="dimension-icon">💰</span>
+                  二、盈利能力
+                  <span class="dimension-desc">反映公司创造利润的能力</span>
+                </h4>
+                <el-row :gutter="16">
+                  <el-col :span="6" v-for="item in profitabilityMetrics" :key="item.key">
+                    <div class="metric-item" :class="item.status">
+                      <div class="metric-name">{{ item.name }}</div>
+                      <div class="metric-value">{{ item.value }}</div>
+                      <div class="metric-analysis">{{ item.analysis }}</div>
+                    </div>
+                  </el-col>
+                </el-row>
+              </div>
+              
+              <!-- 三、偿债能力 -->
+              <div class="dimension-section">
+                <h4 class="dimension-title">
+                  <span class="dimension-icon">🏦</span>
+                  三、偿债能力
+                  <span class="dimension-desc">反映偿还债务的能力，财务安全的重要保障</span>
+                </h4>
+                <el-row :gutter="16">
+                  <el-col :span="6" v-for="item in solvencyMetrics" :key="item.key">
+                    <div class="metric-item" :class="item.status">
+                      <div class="metric-name">{{ item.name }}</div>
+                      <div class="metric-value">{{ item.value }}</div>
+                      <div class="metric-analysis">{{ item.analysis }}</div>
+                    </div>
+                  </el-col>
+                </el-row>
+              </div>
+              
+              <!-- 四、成长能力 -->
+              <div class="dimension-section">
+                <h4 class="dimension-title">
+                  <span class="dimension-icon">📈</span>
+                  四、成长能力
+                  <span class="dimension-desc">反映业务扩张和盈利增长潜力</span>
+                </h4>
+                <el-row :gutter="16">
+                  <el-col :span="6" v-for="item in growthMetrics" :key="item.key">
+                    <div class="metric-item" :class="item.status">
+                      <div class="metric-name">{{ item.name }}</div>
+                      <div class="metric-value">{{ item.value }}</div>
+                      <div class="metric-analysis">{{ item.analysis }}</div>
+                    </div>
+                  </el-col>
+                </el-row>
+              </div>
+              
+              <!-- 五、运营能力 -->
+              <div class="dimension-section">
+                <h4 class="dimension-title">
+                  <span class="dimension-icon">⚙️</span>
+                  五、运营能力
+                  <span class="dimension-desc">反映资产管理的效率，体现经营水平</span>
+                </h4>
+                <el-row :gutter="16">
+                  <el-col :span="6" v-for="item in operationMetrics" :key="item.key">
+                    <div class="metric-item" :class="item.status">
+                      <div class="metric-name">{{ item.name }}</div>
+                      <div class="metric-value">{{ item.value }}</div>
+                      <div class="metric-analysis">{{ item.analysis }}</div>
+                    </div>
+                  </el-col>
+                </el-row>
+              </div>
+              
+              <!-- 六、现金流质量 -->
+              <div class="dimension-section">
+                <h4 class="dimension-title">
+                  <span class="dimension-icon">💵</span>
+                  六、现金流质量
+                  <span class="dimension-desc">识别财务造假的核心指标，反映利润含金量</span>
+                </h4>
+                <el-row :gutter="16">
+                  <el-col :span="6" v-for="item in cashFlowMetrics" :key="item.key">
+                    <div class="metric-item" :class="item.status">
+                      <div class="metric-name">{{ item.name }}</div>
+                      <div class="metric-value">{{ item.value }}</div>
+                      <div class="metric-analysis">{{ item.analysis }}</div>
+                    </div>
+                  </el-col>
+                </el-row>
+              </div>
+            </el-card>
+
+            <!-- 财务指标详情（历史对比） -->
             <el-card shadow="never" class="metrics-detail-card">
               <template #header>
-                <span>五维度财务指标</span>
+                <span>历史财务指标对比</span>
               </template>
               <el-tabs v-model="activeMetricTab">
                 <el-tab-pane label="每股指标" name="每股指标">
@@ -537,6 +655,295 @@ const healthScoreDesc = computed(() => {
   if (score >= 80) return '各项指标表现良好，财务状况稳健'
   if (score >= 60) return '部分指标需要关注，建议进一步分析'
   return '存在多项风险信号，需要重点关注'
+})
+
+// ==================== 五维度财务指标计算 ====================
+
+// 一、每股指标
+const perShareMetrics = computed(() => {
+  const fd = analysisResult.value?.financial_data
+  if (!fd) return []
+  
+  const metrics = []
+  
+  // EPS
+  if (fd.eps != null) {
+    let analysis = '盈利能力弱'
+    let status = 'danger'
+    if (fd.eps >= 1) { analysis = '盈利能力强'; status = 'success' }
+    else if (fd.eps >= 0.3) { analysis = '盈利能力一般'; status = 'warning' }
+    else if (fd.eps > 0) { analysis = '盈利能力较弱'; status = 'warning' }
+    else { analysis = '每股亏损'; status = 'danger' }
+    metrics.push({ key: 'eps', name: '每股收益(EPS)', value: fd.eps.toFixed(4) + ' 元', analysis, status })
+  }
+  
+  // BPS
+  if (fd.bvps != null) {
+    let analysis = '净资产较低'
+    let status = 'warning'
+    if (fd.bvps >= 10) { analysis = '净资产雄厚'; status = 'success' }
+    else if (fd.bvps >= 5) { analysis = '净资产一般'; status = 'normal' }
+    metrics.push({ key: 'bvps', name: '每股净资产(BPS)', value: fd.bvps.toFixed(4) + ' 元', analysis, status })
+  }
+  
+  // 每股经营现金流
+  if (fd.cfps != null) {
+    let analysis = fd.cfps > 0 ? '现金流良好' : '现金流需关注'
+    let status = fd.cfps > 0 ? 'success' : 'warning'
+    metrics.push({ key: 'cfps', name: '每股经营现金流', value: fd.cfps.toFixed(4) + ' 元', analysis, status })
+  }
+  
+  // 每股未分配利润
+  if (fd.retained_eps != null) {
+    metrics.push({ key: 'retained_eps', name: '每股未分配利润', value: fd.retained_eps.toFixed(4) + ' 元', analysis: '-', status: 'normal' })
+  }
+  
+  return metrics
+})
+
+// 二、盈利能力指标
+const profitabilityMetrics = computed(() => {
+  const fd = analysisResult.value?.financial_data
+  if (!fd) return []
+  
+  const metrics = []
+  
+  // ROE
+  if (fd.roe != null) {
+    let analysis = '较弱'
+    let status = 'danger'
+    if (fd.roe >= 20) { analysis = '优秀'; status = 'success' }
+    else if (fd.roe >= 15) { analysis = '良好'; status = 'success' }
+    else if (fd.roe >= 8) { analysis = '一般'; status = 'warning' }
+    metrics.push({ key: 'roe', name: 'ROE净资产收益率', value: fd.roe.toFixed(2) + '%', analysis, status })
+  }
+  
+  // ROA
+  if (fd.roa != null) {
+    let analysis = '较弱'
+    let status = 'danger'
+    if (fd.roa >= 10) { analysis = '优秀'; status = 'success' }
+    else if (fd.roa >= 5) { analysis = '良好'; status = 'normal' }
+    else if (fd.roa >= 2) { analysis = '一般'; status = 'warning' }
+    metrics.push({ key: 'roa', name: 'ROA总资产收益率', value: fd.roa.toFixed(2) + '%', analysis, status })
+  }
+  
+  // 毛利率
+  if (fd.gross_margin != null) {
+    let analysis = '竞争力弱'
+    let status = 'danger'
+    if (fd.gross_margin >= 50) { analysis = '竞争力强'; status = 'success' }
+    else if (fd.gross_margin >= 30) { analysis = '竞争力良好'; status = 'success' }
+    else if (fd.gross_margin >= 15) { analysis = '竞争力一般'; status = 'warning' }
+    metrics.push({ key: 'gross_margin', name: '销售毛利率', value: fd.gross_margin.toFixed(2) + '%', analysis, status })
+  }
+  
+  // 净利率
+  if (fd.net_margin != null) {
+    let analysis = '盈利质量差'
+    let status = 'danger'
+    if (fd.net_margin >= 15) { analysis = '盈利质量优秀'; status = 'success' }
+    else if (fd.net_margin >= 8) { analysis = '盈利质量良好'; status = 'success' }
+    else if (fd.net_margin >= 3) { analysis = '盈利质量一般'; status = 'warning' }
+    metrics.push({ key: 'net_margin', name: '销售净利率', value: fd.net_margin.toFixed(2) + '%', analysis, status })
+  }
+  
+  // 营业利润率
+  if (fd.operating_margin != null) {
+    let analysis = fd.operating_margin >= 15 ? '主业盈利强' : (fd.operating_margin >= 5 ? '主业盈利一般' : '主业盈利弱')
+    let status = fd.operating_margin >= 15 ? 'success' : (fd.operating_margin >= 5 ? 'warning' : 'danger')
+    metrics.push({ key: 'operating_margin', name: '营业利润率', value: fd.operating_margin.toFixed(2) + '%', analysis, status })
+  }
+  
+  return metrics
+})
+
+// 三、偿债能力指标
+const solvencyMetrics = computed(() => {
+  const fd = analysisResult.value?.financial_data
+  if (!fd) return []
+  
+  const metrics = []
+  
+  // 资产负债率
+  if (fd.debt_ratio != null) {
+    let analysis = '高风险'
+    let status = 'danger'
+    if (fd.debt_ratio <= 40) { analysis = '非常稳健'; status = 'success' }
+    else if (fd.debt_ratio <= 60) { analysis = '稳健'; status = 'success' }
+    else if (fd.debt_ratio <= 70) { analysis = '需关注'; status = 'warning' }
+    metrics.push({ key: 'debt_ratio', name: '资产负债率', value: fd.debt_ratio.toFixed(2) + '%', analysis, status })
+  }
+  
+  // 流动比率
+  if (fd.current_ratio != null) {
+    let analysis = '压力大'
+    let status = 'danger'
+    if (fd.current_ratio >= 2) { analysis = '优秀'; status = 'success' }
+    else if (fd.current_ratio >= 1.5) { analysis = '良好'; status = 'success' }
+    else if (fd.current_ratio >= 1) { analysis = '尚可'; status = 'warning' }
+    metrics.push({ key: 'current_ratio', name: '流动比率', value: fd.current_ratio.toFixed(2), analysis, status })
+  }
+  
+  // 速动比率
+  if (fd.quick_ratio != null) {
+    let analysis = fd.quick_ratio >= 1 ? '充足' : '需警惕'
+    let status = fd.quick_ratio >= 1 ? 'success' : 'warning'
+    if (fd.quick_ratio >= 1.5) { analysis = '非常充足'; status = 'success' }
+    metrics.push({ key: 'quick_ratio', name: '速动比率', value: fd.quick_ratio.toFixed(2), analysis, status })
+  }
+  
+  // 利息保障倍数
+  if (fd.interest_coverage != null) {
+    let analysis = '压力大'
+    let status = 'danger'
+    if (fd.interest_coverage >= 5) { analysis = '很强'; status = 'success' }
+    else if (fd.interest_coverage >= 3) { analysis = '尚可'; status = 'warning' }
+    else if (fd.interest_coverage >= 1) { analysis = '压力较大'; status = 'danger' }
+    metrics.push({ key: 'interest_coverage', name: '利息保障倍数', value: fd.interest_coverage.toFixed(2), analysis, status })
+  }
+  
+  return metrics
+})
+
+// 四、成长能力指标
+const growthMetrics = computed(() => {
+  const fd = analysisResult.value?.financial_data
+  if (!fd) return []
+  
+  const metrics = []
+  
+  // 营收增长率
+  if (fd.revenue_growth != null) {
+    let analysis = '收缩'
+    let status = 'danger'
+    if (fd.revenue_growth >= 30) { analysis = '高增长'; status = 'success' }
+    else if (fd.revenue_growth >= 10) { analysis = '稳定增长'; status = 'success' }
+    else if (fd.revenue_growth >= 0) { analysis = '增长放缓'; status = 'warning' }
+    metrics.push({ key: 'revenue_growth', name: '营业收入增长率', value: fd.revenue_growth.toFixed(2) + '%', analysis, status })
+  }
+  
+  // 净利润增长率
+  if (fd.net_profit_growth != null) {
+    let analysis = '下滑'
+    let status = 'danger'
+    if (fd.net_profit_growth >= 30) { analysis = '高增长'; status = 'success' }
+    else if (fd.net_profit_growth >= 10) { analysis = '稳定增长'; status = 'success' }
+    else if (fd.net_profit_growth >= 0) { analysis = '增长放缓'; status = 'warning' }
+    metrics.push({ key: 'net_profit_growth', name: '净利润增长率', value: fd.net_profit_growth.toFixed(2) + '%', analysis, status })
+  }
+  
+  // 总资产增长率
+  if (fd.total_assets_growth != null) {
+    let analysis = fd.total_assets_growth >= 10 ? '扩张快' : (fd.total_assets_growth >= 0 ? '稳定' : '收缩')
+    let status = fd.total_assets_growth >= 10 ? 'success' : (fd.total_assets_growth >= 0 ? 'normal' : 'danger')
+    metrics.push({ key: 'total_assets_growth', name: '总资产增长率', value: fd.total_assets_growth.toFixed(2) + '%', analysis, status })
+  }
+  
+  // 净资产增长率
+  if (fd.net_assets_growth != null) {
+    let analysis = fd.net_assets_growth >= 0 ? '增长' : '下降'
+    let status = fd.net_assets_growth >= 0 ? 'success' : 'warning'
+    metrics.push({ key: 'net_assets_growth', name: '净资产增长率', value: fd.net_assets_growth.toFixed(2) + '%', analysis, status })
+  }
+  
+  return metrics
+})
+
+// 五、运营能力指标
+const operationMetrics = computed(() => {
+  const fd = analysisResult.value?.financial_data
+  if (!fd) return []
+  
+  const metrics = []
+  
+  // 存货周转率
+  if (fd.inventory_turnover != null) {
+    let analysis = '积压风险'
+    let status = 'danger'
+    if (fd.inventory_turnover >= 6) { analysis = '效率高'; status = 'success' }
+    else if (fd.inventory_turnover >= 3) { analysis = '效率一般'; status = 'warning' }
+    metrics.push({ key: 'inventory_turnover', name: '存货周转率', value: fd.inventory_turnover.toFixed(2) + '次', analysis, status })
+  }
+  
+  // 存货周转天数
+  if (fd.inventory_turnover_days != null) {
+    let analysis = fd.inventory_turnover_days <= 60 ? '良好' : (fd.inventory_turnover_days <= 120 ? '一般' : '较慢')
+    let status = fd.inventory_turnover_days <= 60 ? 'success' : (fd.inventory_turnover_days <= 120 ? 'warning' : 'danger')
+    metrics.push({ key: 'inventory_turnover_days', name: '存货周转天数', value: fd.inventory_turnover_days.toFixed(0) + '天', analysis, status })
+  }
+  
+  // 应收账款周转率
+  if (fd.accounts_receivable_turnover != null) {
+    let analysis = '回款风险'
+    let status = 'danger'
+    if (fd.accounts_receivable_turnover >= 10) { analysis = '回款强'; status = 'success' }
+    else if (fd.accounts_receivable_turnover >= 5) { analysis = '回款一般'; status = 'warning' }
+    metrics.push({ key: 'accounts_receivable_turnover', name: '应收账款周转率', value: fd.accounts_receivable_turnover.toFixed(2) + '次', analysis, status })
+  }
+  
+  // 总资产周转率
+  if (fd.total_assets_turnover != null) {
+    let analysis = '效率低'
+    let status = 'danger'
+    if (fd.total_assets_turnover >= 1) { analysis = '效率高'; status = 'success' }
+    else if (fd.total_assets_turnover >= 0.5) { analysis = '效率一般'; status = 'warning' }
+    metrics.push({ key: 'total_assets_turnover', name: '总资产周转率', value: fd.total_assets_turnover.toFixed(2) + '次', analysis, status })
+  }
+  
+  // 营业周期
+  if (fd.operating_cycle != null) {
+    let analysis = '周转慢'
+    let status = 'danger'
+    if (fd.operating_cycle <= 60) { analysis = '周转快'; status = 'success' }
+    else if (fd.operating_cycle <= 120) { analysis = '周转一般'; status = 'warning' }
+    metrics.push({ key: 'operating_cycle', name: '营业周期', value: fd.operating_cycle.toFixed(0) + '天', analysis, status })
+  }
+  
+  return metrics
+})
+
+// 六、现金流质量指标
+const cashFlowMetrics = computed(() => {
+  const fd = analysisResult.value?.financial_data
+  if (!fd) return []
+  
+  const metrics = []
+  
+  // 净现比
+  if (fd.net_cash_ratio != null) {
+    let analysis = '预警'
+    let status = 'danger'
+    if (fd.net_cash_ratio >= 1.2) { analysis = '质量高'; status = 'success' }
+    else if (fd.net_cash_ratio >= 1) { analysis = '质量良好'; status = 'success' }
+    else if (fd.net_cash_ratio >= 0.7) { analysis = '需关注'; status = 'warning' }
+    else { analysis = '⚠️预警'; status = 'danger' }
+    metrics.push({ key: 'net_cash_ratio', name: '净现比', value: fd.net_cash_ratio.toFixed(2), analysis, status })
+  }
+  
+  // 销售现金比率
+  if (fd.cash_to_sales != null) {
+    let analysis = fd.cash_to_sales >= 1 ? '回款正常' : '应收款多'
+    let status = fd.cash_to_sales >= 1 ? 'success' : 'warning'
+    if (fd.cash_to_sales >= 1.1) { analysis = '回款好'; status = 'success' }
+    metrics.push({ key: 'cash_to_sales', name: '销售现金比率', value: fd.cash_to_sales.toFixed(2), analysis, status })
+  }
+  
+  // 经营现金流
+  if (fd.operating_cash_flow != null) {
+    let analysis = fd.operating_cash_flow > 0 ? '正向' : '负向'
+    let status = fd.operating_cash_flow > 0 ? 'success' : 'danger'
+    metrics.push({ key: 'operating_cash_flow', name: '经营现金流', value: formatLargeNumber(fd.operating_cash_flow), analysis, status })
+  }
+  
+  // 自由现金流
+  if (fd.free_cash_flow != null) {
+    let analysis = fd.free_cash_flow > 0 ? '正向' : '负向'
+    let status = fd.free_cash_flow > 0 ? 'success' : 'warning'
+    metrics.push({ key: 'free_cash_flow', name: '自由现金流', value: formatLargeNumber(fd.free_cash_flow), analysis, status })
+  }
+  
+  return metrics
 })
 
 // 风险统计
@@ -1043,6 +1450,104 @@ onMounted(() => {
         .risk-summary {
           display: flex;
           gap: 8px;
+        }
+      }
+    }
+
+    .five-dimension-card {
+      margin-bottom: 20px;
+
+      .five-dimension-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .dimension-section {
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px dashed var(--el-border-color-lighter);
+
+        &:last-child {
+          margin-bottom: 0;
+          padding-bottom: 0;
+          border-bottom: none;
+        }
+      }
+
+      .dimension-title {
+        margin: 0 0 16px 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .dimension-icon {
+          font-size: 18px;
+        }
+
+        .dimension-desc {
+          font-size: 12px;
+          font-weight: 400;
+          color: var(--el-text-color-secondary);
+          margin-left: 8px;
+        }
+      }
+
+      .metric-item {
+        padding: 16px;
+        border-radius: 8px;
+        background-color: var(--el-fill-color-blank);
+        border: 1px solid var(--el-border-color-lighter);
+        text-align: center;
+        transition: all 0.3s;
+
+        &:hover {
+          border-color: var(--el-color-primary-light-5);
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        &.success {
+          border-left: 3px solid #67C23A;
+          .metric-value { color: #67C23A; }
+        }
+
+        &.warning {
+          border-left: 3px solid #E6A23C;
+          .metric-value { color: #E6A23C; }
+        }
+
+        &.danger {
+          border-left: 3px solid #F56C6C;
+          .metric-value { color: #F56C6C; }
+        }
+
+        &.normal {
+          border-left: 3px solid var(--el-color-primary);
+          .metric-value { color: var(--el-color-primary); }
+        }
+
+        .metric-name {
+          font-size: 12px;
+          color: var(--el-text-color-secondary);
+          margin-bottom: 8px;
+        }
+
+        .metric-value {
+          font-size: 20px;
+          font-weight: 700;
+          margin-bottom: 6px;
+        }
+
+        .metric-analysis {
+          font-size: 11px;
+          color: var(--el-text-color-regular);
+          padding: 2px 8px;
+          background-color: var(--el-fill-color-light);
+          border-radius: 10px;
+          display: inline-block;
         }
       }
     }

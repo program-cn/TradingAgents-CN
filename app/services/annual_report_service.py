@@ -28,45 +28,132 @@ class RiskSignal:
 
 @dataclass
 class FinancialData:
-    """财务报表数据"""
-    # 资产负债表
+    """财务报表数据 - 完整五维度指标"""
+    # ==================== 资产负债表 ====================
     total_assets: Optional[float] = None  # 总资产
     total_liabilities: Optional[float] = None  # 总负债
-    total_equity: Optional[float] = None  # 股东权益
+    total_equity: Optional[float] = None  # 股东权益（净资产）
     current_assets: Optional[float] = None  # 流动资产
     current_liabilities: Optional[float] = None  # 流动负债
+    non_current_assets: Optional[float] = None  # 非流动资产
+    non_current_liabilities: Optional[float] = None  # 非流动负债
     cash: Optional[float] = None  # 货币资金
-    inventory: Optional[float] = None  # 存货
+    trading_assets: Optional[float] = None  # 交易性金融资产
+    notes_receivable: Optional[float] = None  # 应收票据
     accounts_receivable: Optional[float] = None  # 应收账款
+    prepayments: Optional[float] = None  # 预付款项
+    other_receivables: Optional[float] = None  # 其他应收款
+    inventory: Optional[float] = None  # 存货
+    contract_assets: Optional[float] = None  # 合同资产
+    long_term_equity_investment: Optional[float] = None  # 长期股权投资
     fixed_assets: Optional[float] = None  # 固定资产
+    construction_in_progress: Optional[float] = None  # 在建工程
+    intangible_assets: Optional[float] = None  # 无形资产
+    goodwill: Optional[float] = None  # 商誉
+    short_term_borrowings: Optional[float] = None  # 短期借款
+    notes_payable: Optional[float] = None  # 应付票据
+    accounts_payable: Optional[float] = None  # 应付账款
+    advance_receipts: Optional[float] = None  # 预收款项
+    contract_liabilities: Optional[float] = None  # 合同负债
+    employee_benefits_payable: Optional[float] = None  # 应付职工薪酬
+    taxes_payable: Optional[float] = None  # 应交税费
+    long_term_borrowings: Optional[float] = None  # 长期借款
+    bonds_payable: Optional[float] = None  # 应付债券
+    retained_earnings: Optional[float] = None  # 未分配利润
     
-    # 利润表
+    # ==================== 利润表 ====================
     revenue: Optional[float] = None  # 营业收入
     operating_cost: Optional[float] = None  # 营业成本
-    gross_profit: Optional[float] = None  # 毛利润
+    tax_surcharges: Optional[float] = None  # 税金及附加
+    selling_expenses: Optional[float] = None  # 销售费用
+    admin_expenses: Optional[float] = None  # 管理费用
+    rd_expenses: Optional[float] = None  # 研发费用
+    financial_expenses: Optional[float] = None  # 财务费用
+    interest_expense: Optional[float] = None  # 利息支出
+    interest_income: Optional[float] = None  # 利息收入
+    asset_impairment_loss: Optional[float] = None  # 资产减值损失
+    credit_impairment_loss: Optional[float] = None  # 信用减值损失
+    other_income: Optional[float] = None  # 其他收益
+    investment_income: Optional[float] = None  # 投资收益
+    fair_value_change: Optional[float] = None  # 公允价值变动收益
     operating_profit: Optional[float] = None  # 营业利润
+    non_operating_income: Optional[float] = None  # 营业外收入
+    non_operating_expense: Optional[float] = None  # 营业外支出
+    profit_before_tax: Optional[float] = None  # 利润总额
+    income_tax_expense: Optional[float] = None  # 所得税费用
     net_profit: Optional[float] = None  # 净利润
-    net_profit_attr: Optional[float] = None  # 归属净利润
+    net_profit_attr: Optional[float] = None  # 归属母公司净利润
+    minority_interest: Optional[float] = None  # 少数股东损益
+    gross_profit: Optional[float] = None  # 毛利润（计算值）
     
-    # 现金流量表
-    operating_cash_flow: Optional[float] = None  # 经营现金流
-    investing_cash_flow: Optional[float] = None  # 投资现金流
-    financing_cash_flow: Optional[float] = None  # 筹资现金流
-    free_cash_flow: Optional[float] = None  # 自由现金流
+    # ==================== 现金流量表 ====================
+    operating_cash_flow: Optional[float] = None  # 经营活动现金流净额
+    cash_received_sales: Optional[float] = None  # 销售商品收到的现金
+    tax_refund: Optional[float] = None  # 收到的税费返还
+    cash_paid_goods: Optional[float] = None  # 购买商品支付的现金
+    cash_paid_employees: Optional[float] = None  # 支付给职工的现金
+    taxes_paid: Optional[float] = None  # 支付的各项税费
+    investing_cash_flow: Optional[float] = None  # 投资活动现金流净额
+    cash_paid_capex: Optional[float] = None  # 购建固定资产支付的现金
+    financing_cash_flow: Optional[float] = None  # 筹资活动现金流净额
+    cash_from_borrowing: Optional[float] = None  # 取得借款收到的现金
+    cash_paid_debt: Optional[float] = None  # 偿还债务支付的现金
+    cash_paid_dividends: Optional[float] = None  # 分配股利支付的现金
+    free_cash_flow: Optional[float] = None  # 自由现金流（计算值）
     
-    # 每股指标
-    eps: Optional[float] = None  # 每股收益
-    bvps: Optional[float] = None  # 每股净资产
-    cfps: Optional[float] = None  # 每股经营现金流
+    # ==================== 每股指标 ====================
+    eps: Optional[float] = None  # 基本每股收益(元)
+    diluted_eps: Optional[float] = None  # 稀释每股收益(元)
+    bvps: Optional[float] = None  # 每股净资产(元)
+    cfps: Optional[float] = None  # 每股经营现金流(元)
+    cfps_operating: Optional[float] = None  # 每股经营活动现金流(元)
+    retained_eps: Optional[float] = None  # 每股未分配利润(元)
+    capital_reserve_ps: Optional[float] = None  # 每股资本公积(元)
+    total_shares: Optional[float] = None  # 总股本(万股)
     
-    # 比率指标
-    roe: Optional[float] = None  # 净资产收益率
-    roa: Optional[float] = None  # 总资产收益率
-    gross_margin: Optional[float] = None  # 毛利率
-    net_margin: Optional[float] = None  # 净利率
-    debt_ratio: Optional[float] = None  # 资产负债率
+    # ==================== 盈利能力指标 ====================
+    roe: Optional[float] = None  # 净资产收益率ROE(%)
+    roe_diluted: Optional[float] = None  # 稀释净资产收益率(%)
+    roa: Optional[float] = None  # 总资产收益率ROA(%)
+    gross_margin: Optional[float] = None  # 销售毛利率(%)
+    net_margin: Optional[float] = None  # 销售净利率(%)
+    operating_margin: Optional[float] = None  # 营业利润率(%)
+    ebit_margin: Optional[float] = None  # EBIT利润率(%)
+    roic: Optional[float] = None  # 投入资本回报率(%)
+    
+    # ==================== 偿债能力指标 ====================
+    debt_ratio: Optional[float] = None  # 资产负债率(%)
+    equity_multiplier: Optional[float] = None  # 权益乘数
     current_ratio: Optional[float] = None  # 流动比率
     quick_ratio: Optional[float] = None  # 速动比率
+    cash_ratio: Optional[float] = None  # 现金比率
+    interest_coverage: Optional[float] = None  # 利息保障倍数
+    times_interest_earned: Optional[float] = None  # 已获利息倍数
+    debt_to_equity: Optional[float] = None  # 产权比率
+    
+    # ==================== 成长能力指标 ====================
+    revenue_growth: Optional[float] = None  # 营业收入增长率(%)
+    net_profit_growth: Optional[float] = None  # 净利润增长率(%)
+    operating_profit_growth: Optional[float] = None  # 营业利润增长率(%)
+    total_assets_growth: Optional[float] = None  # 总资产增长率(%)
+    net_assets_growth: Optional[float] = None  # 净资产增长率(%)
+    eps_growth: Optional[float] = None  # 每股收益增长率(%)
+    
+    # ==================== 运营能力指标 ====================
+    inventory_turnover: Optional[float] = None  # 存货周转率(次)
+    inventory_turnover_days: Optional[float] = None  # 存货周转天数(天)
+    accounts_receivable_turnover: Optional[float] = None  # 应收账款周转率(次)
+    accounts_receivable_turnover_days: Optional[float] = None  # 应收账款周转天数(天)
+    total_assets_turnover: Optional[float] = None  # 总资产周转率(次)
+    fixed_assets_turnover: Optional[float] = None  # 固定资产周转率(次)
+    accounts_payable_turnover: Optional[float] = None  # 应付账款周转率(次)
+    accounts_payable_turnover_days: Optional[float] = None  # 应付账款周转天数(天)
+    operating_cycle: Optional[float] = None  # 营业周期(天)
+    
+    # ==================== 现金流质量指标 ====================
+    net_cash_ratio: Optional[float] = None  # 净现比(经营现金流/净利润)
+    cash_to_sales: Optional[float] = None  # 销售现金比率(销售商品收到现金/营业收入)
+    cash_to_operating_profit: Optional[float] = None  # 经营现金流/营业利润
 
 
 @dataclass
@@ -183,51 +270,156 @@ def extract_number_near_keyword(text: str, keyword: str, max_distance: int = 100
 
 
 def extract_table_data(text: str) -> Dict[str, str]:
-    """从文本中提取表格数据"""
+    """从文本中提取表格数据 - 完整五维度财务指标"""
     data = {}
     
-    # 常见财务指标关键词
-    keywords = [
-        # 资产负债表
+    # ==================== 资产负债表指标 ====================
+    balance_sheet_keywords = [
+        # 资产
         ('total_assets', ['资产总计', '总资产', '资产合计']),
+        ('current_assets', ['流动资产合计', '流动资产总计']),
+        ('non_current_assets', ['非流动资产合计', '非流动资产总计']),
+        ('cash', ['货币资金', '现金及现金等价物余额']),
+        ('trading_assets', ['交易性金融资产']),
+        ('notes_receivable', ['应收票据']),
+        ('accounts_receivable', ['应收账款']),
+        ('prepayments', ['预付款项', '预付账款']),
+        ('other_receivables', ['其他应收款']),
+        ('inventory', ['存货']),
+        ('contract_assets', ['合同资产']),
+        ('long_term_equity_investment', ['长期股权投资']),
+        ('fixed_assets', ['固定资产', '固定资产净额', '固定资产原价']),
+        ('construction_in_progress', ['在建工程']),
+        ('intangible_assets', ['无形资产']),
+        ('goodwill', ['商誉']),
+        
+        # 负债
         ('total_liabilities', ['负债合计', '负债总计', '总负债']),
-        ('total_equity', ['股东权益合计', '所有者权益合计', '净资产', '股东权益']),
-        ('current_assets', ['流动资产合计', '流动资产']),
-        ('current_liabilities', ['流动负债合计', '流动负债']),
-        ('cash', ['货币资金', '现金及现金等价物']),
-        ('inventory', ['存货', '库存']),
-        ('accounts_receivable', ['应收账款', '应收票据']),
-        ('fixed_assets', ['固定资产', '固定资产净额']),
+        ('current_liabilities', ['流动负债合计', '流动负债总计']),
+        ('non_current_liabilities', ['非流动负债合计', '非流动负债总计']),
+        ('short_term_borrowings', ['短期借款']),
+        ('notes_payable', ['应付票据']),
+        ('accounts_payable', ['应付账款']),
+        ('advance_receipts', ['预收款项', '预收账款']),
+        ('contract_liabilities', ['合同负债']),
+        ('employee_benefits_payable', ['应付职工薪酬']),
+        ('taxes_payable', ['应交税费']),
+        ('long_term_borrowings', ['长期借款']),
+        ('bonds_payable', ['应付债券']),
         
-        # 利润表
-        ('revenue', ['营业收入', '主营业务收入', '销售收入']),
-        ('operating_cost', ['营业成本', '主营业务成本', '销售成本']),
-        ('gross_profit', ['毛利润', '毛利']),
+        # 所有者权益
+        ('total_equity', ['股东权益合计', '所有者权益合计', '净资产', '归属于母公司股东权益合计']),
+        ('retained_earnings', ['未分配利润']),
+    ]
+    
+    # ==================== 利润表指标 ====================
+    income_statement_keywords = [
+        ('revenue', ['营业收入', '主营业务收入']),
+        ('operating_cost', ['营业成本', '主营业务成本']),
+        ('tax_surcharges', ['税金及附加']),
+        ('selling_expenses', ['销售费用']),
+        ('admin_expenses', ['管理费用']),
+        ('rd_expenses', ['研发费用']),
+        ('financial_expenses', ['财务费用']),
+        ('interest_expense', ['利息支出']),
+        ('asset_impairment_loss', ['资产减值损失']),
+        ('credit_impairment_loss', ['信用减值损失']),
+        ('other_income', ['其他收益']),
+        ('investment_income', ['投资收益']),
+        ('fair_value_change', ['公允价值变动收益']),
         ('operating_profit', ['营业利润']),
+        ('non_operating_income', ['营业外收入']),
+        ('non_operating_expense', ['营业外支出']),
+        ('profit_before_tax', ['利润总额']),
+        ('income_tax_expense', ['所得税费用']),
         ('net_profit', ['净利润', '净收益']),
-        ('net_profit_attr', ['归属于母公司股东的净利润', '归属净利润']),
-        
-        # 现金流量表
-        ('operating_cash_flow', ['经营活动产生的现金流量净额', '经营活动现金流净额', '经营现金流']),
+        ('net_profit_attr', ['归属于母公司股东的净利润', '归属母公司股东的净利润', '归属净利润']),
+        ('minority_interest', ['少数股东损益']),
+    ]
+    
+    # ==================== 现金流量表指标 ====================
+    cashflow_keywords = [
+        ('operating_cash_flow', ['经营活动产生的现金流量净额', '经营活动现金流净额', '经营现金流净额']),
+        ('cash_received_sales', ['销售商品、提供劳务收到的现金']),
+        ('tax_refund', ['收到的税费返还']),
+        ('cash_paid_goods', ['购买商品、接受劳务支付的现金']),
+        ('cash_paid_employees', ['支付给职工以及为职工支付的现金']),
+        ('taxes_paid', ['支付的各项税费']),
         ('investing_cash_flow', ['投资活动产生的现金流量净额', '投资活动现金流净额']),
+        ('cash_paid_capex', ['购建固定资产、无形资产和其他长期资产支付的现金']),
         ('financing_cash_flow', ['筹资活动产生的现金流量净额', '筹资活动现金流净额']),
-        
-        # 每股指标
-        ('eps', ['基本每股收益', '每股收益', 'EPS']),
+        ('cash_from_borrowing', ['取得借款收到的现金']),
+        ('cash_paid_debt', ['偿还债务支付的现金']),
+        ('cash_paid_dividends', ['分配股利、利润或偿付利息支付的现金']),
+    ]
+    
+    # ==================== 每股指标 ====================
+    per_share_keywords = [
+        ('eps', ['基本每股收益', '每股收益']),
+        ('diluted_eps', ['稀释每股收益']),
         ('bvps', ['每股净资产', '归属于母公司股东的每股净资产']),
         ('cfps', ['每股经营活动产生的现金流量净额', '每股经营现金流']),
-        
-        # 比率指标
-        ('roe', ['净资产收益率', 'ROE', '加权平均净资产收益率']),
-        ('roa', ['总资产收益率', 'ROA', '总资产净利率']),
-        ('gross_margin', ['毛利率', '销售毛利率']),
-        ('net_margin', ['净利率', '销售净利率']),
+        ('retained_eps', ['每股未分配利润']),
+        ('capital_reserve_ps', ['每股资本公积']),
+        ('total_shares', ['股本', '总股本']),
+    ]
+    
+    # ==================== 盈利能力指标 ====================
+    profitability_keywords = [
+        ('roe', ['净资产收益率', '加权平均净资产收益率', 'ROE']),
+        ('roe_diluted', ['稀释净资产收益率']),
+        ('roa', ['总资产收益率', '总资产净利率', 'ROA']),
+        ('gross_margin', ['销售毛利率', '毛利率']),
+        ('net_margin', ['销售净利率', '净利率']),
+        ('operating_margin', ['营业利润率']),
+        ('roic', ['投入资本回报率']),
+    ]
+    
+    # ==================== 偿债能力指标 ====================
+    solvency_keywords = [
         ('debt_ratio', ['资产负债率']),
         ('current_ratio', ['流动比率']),
         ('quick_ratio', ['速动比率']),
+        ('cash_ratio', ['现金比率']),
+        ('interest_coverage', ['利息保障倍数', '已获利息倍数']),
+        ('debt_to_equity', ['产权比率']),
     ]
     
-    for key, kw_list in keywords:
+    # ==================== 成长能力指标 ====================
+    growth_keywords = [
+        ('revenue_growth', ['营业收入增长率', '营收增长率']),
+        ('net_profit_growth', ['净利润增长率']),
+        ('operating_profit_growth', ['营业利润增长率']),
+        ('total_assets_growth', ['总资产增长率']),
+        ('net_assets_growth', ['净资产增长率']),
+        ('eps_growth', ['每股收益增长率']),
+    ]
+    
+    # ==================== 运营能力指标 ====================
+    operation_keywords = [
+        ('inventory_turnover', ['存货周转率']),
+        ('inventory_turnover_days', ['存货周转天数']),
+        ('accounts_receivable_turnover', ['应收账款周转率']),
+        ('accounts_receivable_turnover_days', ['应收账款周转天数']),
+        ('total_assets_turnover', ['总资产周转率']),
+        ('fixed_assets_turnover', ['固定资产周转率']),
+        ('accounts_payable_turnover', ['应付账款周转率']),
+        ('accounts_payable_turnover_days', ['应付账款周转天数']),
+    ]
+    
+    # 合并所有关键词
+    all_keywords = (
+        balance_sheet_keywords + 
+        income_statement_keywords + 
+        cashflow_keywords + 
+        per_share_keywords +
+        profitability_keywords +
+        solvency_keywords +
+        growth_keywords +
+        operation_keywords
+    )
+    
+    for key, kw_list in all_keywords:
         for kw in kw_list:
             value = extract_number_near_keyword(text, kw)
             if value is not None:
@@ -238,7 +430,7 @@ def extract_table_data(text: str) -> Dict[str, str]:
 
 
 def parse_pdf_financial_data(pdf_path: str) -> Tuple[FinancialData, bool]:
-    """解析 PDF 财务数据"""
+    """解析 PDF 财务数据 - 完整五维度指标计算"""
     text = extract_text_from_pdf(pdf_path)
     
     if not text:
@@ -257,36 +449,140 @@ def parse_pdf_financial_data(pdf_path: str) -> Tuple[FinancialData, bool]:
         if hasattr(data, key):
             setattr(data, key, value)
     
-    # 计算派生指标
+    # ==================== 计算派生指标 ====================
+    
+    # === 毛利润 ===
     if data.revenue and data.operating_cost:
         data.gross_profit = data.revenue - data.operating_cost
+    
+    # === 自由现金流 ===
+    if data.operating_cash_flow:
+        capex = data.cash_paid_capex if data.cash_paid_capex else abs(data.operating_cash_flow) * 0.2
+        data.free_cash_flow = data.operating_cash_flow - abs(capex)
+    
+    # ==================== 一、每股指标计算 ====================
+    # 如果没有从PDF提取到每股指标，尝试计算
+    
+    # 每股收益 EPS（如果未提取）
+    if data.eps is None and data.net_profit_attr and data.total_shares:
+        data.eps = data.net_profit_attr / (data.total_shares * 10000)  # 总股本单位是万股
+    
+    # 每股净资产 BVPS
+    if data.bvps is None and data.total_equity and data.total_shares:
+        data.bvps = data.total_equity / (data.total_shares * 10000)
+    
+    # 每股经营现金流 CFPS
+    if data.cfps is None and data.operating_cash_flow and data.total_shares:
+        data.cfps = data.operating_cash_flow / (data.total_shares * 10000)
+    
+    # ==================== 二、盈利能力指标计算 ====================
+    
+    # 毛利率
+    if data.gross_margin is None and data.gross_profit and data.revenue:
         data.gross_margin = (data.gross_profit / data.revenue) * 100
     
-    if data.net_profit and data.revenue:
+    # 净利率
+    if data.net_margin is None and data.net_profit and data.revenue:
         data.net_margin = (data.net_profit / data.revenue) * 100
     
-    if data.total_liabilities and data.total_assets:
-        data.debt_ratio = (data.total_liabilities / data.total_assets) * 100
+    # 营业利润率
+    if data.operating_margin is None and data.operating_profit and data.revenue:
+        data.operating_margin = (data.operating_profit / data.revenue) * 100
     
-    if data.current_assets and data.current_liabilities:
-        data.current_ratio = data.current_assets / data.current_liabilities
-    
-    if data.current_assets and data.inventory and data.current_liabilities:
-        data.quick_ratio = (data.current_assets - data.inventory) / data.current_liabilities
-    
-    if data.net_profit and data.total_equity:
+    # ROE 净资产收益率
+    if data.roe is None and data.net_profit and data.total_equity:
         data.roe = (data.net_profit / data.total_equity) * 100
     
-    if data.net_profit and data.total_assets:
+    # ROA 总资产收益率
+    if data.roa is None and data.net_profit and data.total_assets:
         data.roa = (data.net_profit / data.total_assets) * 100
     
-    if data.operating_cash_flow and data.total_equity:
-        data.cfps = data.operating_cash_flow / (data.total_equity / (data.eps or 1))
+    # 投入资本回报率 ROIC（简化计算）
+    if data.roic is None and data.net_profit and data.total_equity and data.total_liabilities:
+        invested_capital = data.total_equity + (data.total_liabilities - (data.accounts_payable or 0))
+        if invested_capital > 0:
+            data.roic = (data.operating_profit or data.net_profit) / invested_capital * 100
     
-    # 自由现金流
-    if data.operating_cash_flow:
-        # 假设资本支出约为经营现金流的 20-30%
-        data.free_cash_flow = data.operating_cash_flow * 0.7
+    # ==================== 三、偿债能力指标计算 ====================
+    
+    # 资产负债率
+    if data.debt_ratio is None and data.total_liabilities and data.total_assets:
+        data.debt_ratio = (data.total_liabilities / data.total_assets) * 100
+    
+    # 流动比率
+    if data.current_ratio is None and data.current_assets and data.current_liabilities:
+        data.current_ratio = data.current_assets / data.current_liabilities
+    
+    # 速动比率 = (流动资产 - 存货) / 流动负债
+    if data.quick_ratio is None and data.current_assets and data.current_liabilities:
+        quick_assets = data.current_assets - (data.inventory or 0)
+        data.quick_ratio = quick_assets / data.current_liabilities
+    
+    # 现金比率 = (货币资金 + 交易性金融资产) / 流动负债
+    if data.cash_ratio is None and data.current_liabilities:
+        cash_equivalents = (data.cash or 0) + (data.trading_assets or 0)
+        data.cash_ratio = cash_equivalents / data.current_liabilities
+    
+    # 利息保障倍数 = (营业利润 + 利息费用) / 利息费用
+    if data.interest_coverage is None and data.interest_expense and data.interest_expense > 0:
+        ebit = (data.operating_profit or data.net_profit or 0) + data.interest_expense
+        data.interest_coverage = ebit / data.interest_expense
+        data.times_interest_earned = data.interest_coverage
+    
+    # 产权比率 = 总负债 / 股东权益
+    if data.debt_to_equity is None and data.total_liabilities and data.total_equity:
+        data.debt_to_equity = data.total_liabilities / data.total_equity
+    
+    # 权益乘数 = 总资产 / 股东权益
+    if data.equity_multiplier is None and data.total_assets and data.total_equity:
+        data.equity_multiplier = data.total_assets / data.total_equity
+    
+    # ==================== 四、运营能力指标计算 ====================
+    
+    # 存货周转率 = 营业成本 / 平均存货（简化用期末存货）
+    if data.inventory_turnover is None and data.operating_cost and data.inventory and data.inventory > 0:
+        data.inventory_turnover = data.operating_cost / data.inventory
+        data.inventory_turnover_days = 365 / data.inventory_turnover
+    
+    # 应收账款周转率 = 营业收入 / 平均应收账款
+    if data.accounts_receivable_turnover is None and data.revenue:
+        ar = data.accounts_receivable or 0
+        if ar > 0:
+            data.accounts_receivable_turnover = data.revenue / ar
+            data.accounts_receivable_turnover_days = 365 / data.accounts_receivable_turnover
+    
+    # 总资产周转率 = 营业收入 / 平均总资产
+    if data.total_assets_turnover is None and data.revenue and data.total_assets and data.total_assets > 0:
+        data.total_assets_turnover = data.revenue / data.total_assets
+    
+    # 固定资产周转率 = 营业收入 / 固定资产
+    if data.fixed_assets_turnover is None and data.revenue and data.fixed_assets and data.fixed_assets > 0:
+        data.fixed_assets_turnover = data.revenue / data.fixed_assets
+    
+    # 应付账款周转率 = 营业成本 / 平均应付账款
+    if data.accounts_payable_turnover is None and data.operating_cost and data.accounts_payable and data.accounts_payable > 0:
+        data.accounts_payable_turnover = data.operating_cost / data.accounts_payable
+        data.accounts_payable_turnover_days = 365 / data.accounts_payable_turnover
+    
+    # 营业周期 = 存货周转天数 + 应收账款周转天数
+    if data.operating_cycle is None:
+        days = (data.inventory_turnover_days or 0) + (data.accounts_receivable_turnover_days or 0)
+        if days > 0:
+            data.operating_cycle = days
+    
+    # ==================== 五、现金流质量指标计算 ====================
+    
+    # 净现比 = 经营现金流 / 净利润
+    if data.net_cash_ratio is None and data.operating_cash_flow and data.net_profit and data.net_profit != 0:
+        data.net_cash_ratio = data.operating_cash_flow / data.net_profit
+    
+    # 销售现金比率 = 销售商品收到现金 / 营业收入
+    if data.cash_to_sales is None and data.cash_received_sales and data.revenue and data.revenue != 0:
+        data.cash_to_sales = data.cash_received_sales / data.revenue
+    
+    # 经营现金流 / 营业利润
+    if data.cash_to_operating_profit is None and data.operating_cash_flow and data.operating_profit and data.operating_profit != 0:
+        data.cash_to_operating_profit = data.operating_cash_flow / data.operating_profit
     
     return data, len(extracted) > 5
 
@@ -391,26 +687,66 @@ def safe_float(value) -> Optional[float]:
 
 
 def analyze_financial_data(data: FinancialData, metrics: Dict) -> List[RiskSignal]:
-    """分析财务数据，生成风险信号"""
+    """分析财务数据，生成风险信号 - 完整五维度分析"""
     signals = []
     
-    # === 盈利能力分析 ===
+    # ==================== 一、每股指标分析 ====================
     
-    # ROE 分析
+    # 每股收益 EPS 分析
+    eps_val = safe_float(data.eps)
+    if eps_val is None:
+        eps_val = safe_float(metrics.get('每股指标', {}).get('基本每股收益(元)', [None])[0])
+    
+    if eps_val is not None:
+        if eps_val >= 1.0:
+            signals.append(RiskSignal('每股收益EPS', f'{eps_val:.2f}元', '低',
+                f'EPS {eps_val:.2f}元，每股盈利能力强'))
+        elif eps_val >= 0.3:
+            signals.append(RiskSignal('每股收益EPS', f'{eps_val:.2f}元', '中',
+                f'EPS {eps_val:.2f}元，盈利能力一般'))
+        elif eps_val > 0:
+            signals.append(RiskSignal('每股收益EPS', f'{eps_val:.2f}元', '高',
+                f'EPS {eps_val:.2f}元，每股盈利较弱'))
+        else:
+            signals.append(RiskSignal('每股收益EPS', f'{eps_val:.2f}元', '高',
+                f'EPS {eps_val:.2f}元，每股亏损'))
+    
+    # 每股净资产 BVPS 分析
+    bvps_val = safe_float(data.bvps)
+    if bvps_val is None:
+        bvps_val = safe_float(metrics.get('每股指标', {}).get('每股净资产(元)', [None])[0])
+    
+    if bvps_val is not None:
+        if bvps_val >= 10:
+            signals.append(RiskSignal('每股净资产', f'{bvps_val:.2f}元', '低',
+                f'BPS {bvps_val:.2f}元，每股净资产雄厚'))
+        elif bvps_val >= 5:
+            signals.append(RiskSignal('每股净资产', f'{bvps_val:.2f}元', '中',
+                f'BPS {bvps_val:.2f}元，每股净资产一般'))
+        else:
+            signals.append(RiskSignal('每股净资产', f'{bvps_val:.2f}元', '高',
+                f'BPS {bvps_val:.2f}元，每股净资产较低'))
+    
+    # ==================== 二、盈利能力分析 ====================
+    
+    # ROE 分析（核心指标）
     roe_val = safe_float(data.roe)
     if roe_val is None:
         roe_val = safe_float(metrics.get('盈利能力', {}).get('净资产收益率(%)', [None])[0])
     
     if roe_val is not None:
-        if roe_val >= 15:
-            signals.append(RiskSignal('ROE', f'{roe_val:.2f}%', '低',
-                f'ROE {roe_val:.2f}% >= 15%，盈利能力优秀，资本运用效率高'))
+        if roe_val >= 20:
+            signals.append(RiskSignal('ROE净资产收益率', f'{roe_val:.2f}%', '低',
+                f'ROE {roe_val:.2f}% >= 20%，盈利能力优秀，巴菲特选股标准'))
+        elif roe_val >= 15:
+            signals.append(RiskSignal('ROE净资产收益率', f'{roe_val:.2f}%', '低',
+                f'ROE {roe_val:.2f}% >= 15%，盈利能力良好'))
         elif roe_val >= 8:
-            signals.append(RiskSignal('ROE', f'{roe_val:.2f}%', '中',
+            signals.append(RiskSignal('ROE净资产收益率', f'{roe_val:.2f}%', '中',
                 f'ROE {roe_val:.2f}%，盈利能力一般，有提升空间'))
         else:
-            signals.append(RiskSignal('ROE', f'{roe_val:.2f}%', '高',
-                f'ROE {roe_val:.2f}% < 8%，盈利能力弱，需关注'))
+            signals.append(RiskSignal('ROE净资产收益率', f'{roe_val:.2f}%', '高',
+                f'ROE {roe_val:.2f}% < 8%，盈利能力弱，需重点关注'))
     
     # ROA 分析
     roa_val = safe_float(data.roa)
@@ -418,15 +754,18 @@ def analyze_financial_data(data: FinancialData, metrics: Dict) -> List[RiskSigna
         roa_val = safe_float(metrics.get('盈利能力', {}).get('总资产净利率(%)', [None])[0])
     
     if roa_val is not None:
-        if roa_val >= 8:
-            signals.append(RiskSignal('ROA', f'{roa_val:.2f}%', '低',
-                f'ROA {roa_val:.2f}% >= 8%，资产运营效率高'))
-        elif roa_val >= 4:
-            signals.append(RiskSignal('ROA', f'{roa_val:.2f}%', '中',
+        if roa_val >= 10:
+            signals.append(RiskSignal('ROA总资产收益率', f'{roa_val:.2f}%', '低',
+                f'ROA {roa_val:.2f}% >= 10%，资产运营效率优秀'))
+        elif roa_val >= 5:
+            signals.append(RiskSignal('ROA总资产收益率', f'{roa_val:.2f}%', '中',
+                f'ROA {roa_val:.2f}%，资产运营效率良好'))
+        elif roa_val >= 2:
+            signals.append(RiskSignal('ROA总资产收益率', f'{roa_val:.2f}%', '中',
                 f'ROA {roa_val:.2f}%，资产运营效率一般'))
         else:
-            signals.append(RiskSignal('ROA', f'{roa_val:.2f}%', '高',
-                f'ROA {roa_val:.2f}% < 4%，资产运营效率低'))
+            signals.append(RiskSignal('ROA总资产收益率', f'{roa_val:.2f}%', '高',
+                f'ROA {roa_val:.2f}% < 2%，资产运营效率低'))
     
     # 毛利率分析
     gm_val = safe_float(data.gross_margin)
@@ -434,15 +773,18 @@ def analyze_financial_data(data: FinancialData, metrics: Dict) -> List[RiskSigna
         gm_val = safe_float(metrics.get('盈利能力', {}).get('销售毛利率(%)', [None])[0])
     
     if gm_val is not None:
-        if gm_val >= 40:
-            signals.append(RiskSignal('毛利率', f'{gm_val:.2f}%', '低',
-                f'毛利率 {gm_val:.2f}% >= 40%，产品竞争力强'))
-        elif gm_val >= 20:
-            signals.append(RiskSignal('毛利率', f'{gm_val:.2f}%', '中',
+        if gm_val >= 50:
+            signals.append(RiskSignal('销售毛利率', f'{gm_val:.2f}%', '低',
+                f'毛利率 {gm_val:.2f}% >= 50%，产品核心竞争力强'))
+        elif gm_val >= 30:
+            signals.append(RiskSignal('销售毛利率', f'{gm_val:.2f}%', '低',
+                f'毛利率 {gm_val:.2f}% >= 30%，产品竞争力良好'))
+        elif gm_val >= 15:
+            signals.append(RiskSignal('销售毛利率', f'{gm_val:.2f}%', '中',
                 f'毛利率 {gm_val:.2f}%，行业竞争一般'))
         else:
-            signals.append(RiskSignal('毛利率', f'{gm_val:.2f}%', '高',
-                f'毛利率 {gm_val:.2f}% < 20%，产品竞争力弱或成本控制差'))
+            signals.append(RiskSignal('销售毛利率', f'{gm_val:.2f}%', '高',
+                f'毛利率 {gm_val:.2f}% < 15%，产品竞争力弱或成本控制差'))
     
     # 净利率分析
     nm_val = safe_float(data.net_margin)
@@ -450,17 +792,33 @@ def analyze_financial_data(data: FinancialData, metrics: Dict) -> List[RiskSigna
         nm_val = safe_float(metrics.get('盈利能力', {}).get('销售净利率(%)', [None])[0])
     
     if nm_val is not None:
-        if nm_val >= 10:
-            signals.append(RiskSignal('净利率', f'{nm_val:.2f}%', '低',
-                f'净利率 {nm_val:.2f}% >= 10%，盈利质量好'))
-        elif nm_val >= 5:
-            signals.append(RiskSignal('净利率', f'{nm_val:.2f}%', '中',
+        if nm_val >= 15:
+            signals.append(RiskSignal('销售净利率', f'{nm_val:.2f}%', '低',
+                f'净利率 {nm_val:.2f}% >= 15%，盈利质量优秀'))
+        elif nm_val >= 8:
+            signals.append(RiskSignal('销售净利率', f'{nm_val:.2f}%', '低',
+                f'净利率 {nm_val:.2f}% >= 8%，盈利质量良好'))
+        elif nm_val >= 3:
+            signals.append(RiskSignal('销售净利率', f'{nm_val:.2f}%', '中',
                 f'净利率 {nm_val:.2f}%，盈利质量一般'))
         else:
-            signals.append(RiskSignal('净利率', f'{nm_val:.2f}%', '高',
-                f'净利率 {nm_val:.2f}% < 5%，费用率偏高或主业盈利弱'))
+            signals.append(RiskSignal('销售净利率', f'{nm_val:.2f}%', '高',
+                f'净利率 {nm_val:.2f}% < 3%，费用率偏高或主业盈利弱'))
     
-    # === 偿债能力分析 ===
+    # 营业利润率分析
+    opm_val = safe_float(data.operating_margin)
+    if opm_val is not None:
+        if opm_val >= 15:
+            signals.append(RiskSignal('营业利润率', f'{opm_val:.2f}%', '低',
+                f'营业利润率 {opm_val:.2f}%，主业盈利能力强'))
+        elif opm_val >= 5:
+            signals.append(RiskSignal('营业利润率', f'{opm_val:.2f}%', '中',
+                f'营业利润率 {opm_val:.2f}%，主业盈利能力一般'))
+        else:
+            signals.append(RiskSignal('营业利润率', f'{opm_val:.2f}%', '高',
+                f'营业利润率 {opm_val:.2f}%，主业盈利能力弱'))
+    
+    # ==================== 三、偿债能力分析 ====================
     
     # 资产负债率
     debt_val = safe_float(data.debt_ratio)
@@ -468,9 +826,12 @@ def analyze_financial_data(data: FinancialData, metrics: Dict) -> List[RiskSigna
         debt_val = safe_float(metrics.get('偿债能力', {}).get('资产负债率(%)', [None])[0])
     
     if debt_val is not None:
-        if debt_val <= 60:
+        if debt_val <= 40:
             signals.append(RiskSignal('资产负债率', f'{debt_val:.2f}%', '低',
-                f'资产负债率 {debt_val:.2f}% <= 60%，财务结构稳健'))
+                f'资产负债率 {debt_val:.2f}% <= 40%，财务结构非常稳健'))
+        elif debt_val <= 60:
+            signals.append(RiskSignal('资产负债率', f'{debt_val:.2f}%', '低',
+                f'资产负债率 {debt_val:.2f}%，财务结构稳健'))
         elif debt_val <= 70:
             signals.append(RiskSignal('资产负债率', f'{debt_val:.2f}%', '中',
                 f'资产负债率 {debt_val:.2f}%，需关注债务压力'))
@@ -484,12 +845,18 @@ def analyze_financial_data(data: FinancialData, metrics: Dict) -> List[RiskSigna
         cr_val = safe_float(metrics.get('偿债能力', {}).get('流动比率', [None])[0])
     
     if cr_val is not None:
-        if cr_val >= 1.5:
+        if cr_val >= 2.0:
+            signals.append(RiskSignal('流动比率', f'{cr_val:.2f}', '低',
+                f'流动比率 {cr_val:.2f} >= 2，短期偿债能力优秀'))
+        elif cr_val >= 1.5:
             signals.append(RiskSignal('流动比率', f'{cr_val:.2f}', '低',
                 f'流动比率 {cr_val:.2f} >= 1.5，短期偿债能力良好'))
+        elif cr_val >= 1.0:
+            signals.append(RiskSignal('流动比率', f'{cr_val:.2f}', '中',
+                f'流动比率 {cr_val:.2f}，短期偿债能力尚可'))
         else:
             signals.append(RiskSignal('流动比率', f'{cr_val:.2f}', '高',
-                f'流动比率 {cr_val:.2f} < 1.5，短期偿债压力大'))
+                f'流动比率 {cr_val:.2f} < 1，短期偿债压力大'))
     
     # 速动比率
     qr_val = safe_float(data.quick_ratio)
@@ -497,54 +864,184 @@ def analyze_financial_data(data: FinancialData, metrics: Dict) -> List[RiskSigna
         qr_val = safe_float(metrics.get('偿债能力', {}).get('速动比率', [None])[0])
     
     if qr_val is not None:
-        if qr_val >= 1.0:
+        if qr_val >= 1.5:
+            signals.append(RiskSignal('速动比率', f'{qr_val:.2f}', '低',
+                f'速动比率 {qr_val:.2f} >= 1.5，流动性非常充足'))
+        elif qr_val >= 1.0:
             signals.append(RiskSignal('速动比率', f'{qr_val:.2f}', '低',
                 f'速动比率 {qr_val:.2f} >= 1，流动性充足'))
         else:
             signals.append(RiskSignal('速动比率', f'{qr_val:.2f}', '高',
                 f'速动比率 {qr_val:.2f} < 1，需警惕流动性风险'))
     
-    # === 现金流质量分析 ===
+    # 利息保障倍数
+    ic_val = safe_float(data.interest_coverage)
+    if ic_val is None:
+        ic_val = safe_float(metrics.get('偿债能力', {}).get('利息保障倍数', [None])[0])
     
-    # 净现比分析（核心指标）
-    eps_val = safe_float(data.eps)
-    cfps_val = safe_float(data.cfps)
-    
-    if eps_val is None:
-        eps_val = safe_float(metrics.get('每股指标', {}).get('摊薄每股收益(元)', [None])[0])
-    if cfps_val is None:
-        cfps_val = safe_float(metrics.get('每股指标', {}).get('每股经营性现金流(元)', [None])[0])
-    
-    if eps_val and cfps_val and eps_val > 0:
-        net_cash_ratio = cfps_val / eps_val
-        if net_cash_ratio >= 1.0:
-            signals.append(RiskSignal('净现比', f'{net_cash_ratio:.2f}', '低',
-                f'净现比 {net_cash_ratio:.2f} >= 1，利润有现金支撑，质量高'))
-        elif net_cash_ratio >= 0.7:
-            signals.append(RiskSignal('净现比', f'{net_cash_ratio:.2f}', '中',
-                f'净现比 {net_cash_ratio:.2f}，利润含金量一般，需关注'))
+    if ic_val is not None:
+        if ic_val >= 5:
+            signals.append(RiskSignal('利息保障倍数', f'{ic_val:.2f}', '低',
+                f'利息保障倍数 {ic_val:.2f} >= 5，偿债能力很强'))
+        elif ic_val >= 3:
+            signals.append(RiskSignal('利息保障倍数', f'{ic_val:.2f}', '中',
+                f'利息保障倍数 {ic_val:.2f}，偿债能力尚可'))
+        elif ic_val >= 1:
+            signals.append(RiskSignal('利息保障倍数', f'{ic_val:.2f}', '高',
+                f'利息保障倍数 {ic_val:.2f}，偿债压力较大'))
         else:
-            signals.append(RiskSignal('净现比', f'{net_cash_ratio:.2f}', '高',
-                f'净现比 {net_cash_ratio:.2f} < 0.7，利润含金量低，可能存在虚增利润'))
+            signals.append(RiskSignal('利息保障倍数', f'{ic_val:.2f}', '高',
+                f'利息保障倍数 {ic_val:.2f} < 1，无法覆盖利息支出'))
     
-    # === 成长能力分析 ===
+    # ==================== 四、成长能力分析 ====================
     
-    pg_val = safe_float(metrics.get('成长能力', {}).get('净利润增长率(%)', [None])[0])
+    # 营业收入增长率
+    rg_val = safe_float(data.revenue_growth)
+    if rg_val is None:
+        rg_val = safe_float(metrics.get('成长能力', {}).get('营业收入增长率(%)', [None])[0])
+    
+    if rg_val is not None:
+        if rg_val >= 30:
+            signals.append(RiskSignal('营业收入增长率', f'{rg_val:.2f}%', '低',
+                f'营收增长 {rg_val:.2f}% >= 30%，高增长'))
+        elif rg_val >= 10:
+            signals.append(RiskSignal('营业收入增长率', f'{rg_val:.2f}%', '低',
+                f'营收增长 {rg_val:.2f}% >= 10%，稳定增长'))
+        elif rg_val >= 0:
+            signals.append(RiskSignal('营业收入增长率', f'{rg_val:.2f}%', '中',
+                f'营收增长 {rg_val:.2f}%，增长放缓'))
+        else:
+            signals.append(RiskSignal('营业收入增长率', f'{rg_val:.2f}%', '高',
+                f'营收增长 {rg_val:.2f}% < 0，主营业务收缩'))
+    
+    # 净利润增长率
+    pg_val = safe_float(data.net_profit_growth)
+    if pg_val is None:
+        pg_val = safe_float(metrics.get('成长能力', {}).get('净利润增长率(%)', [None])[0])
+    
     if pg_val is not None:
-        if pg_val > 20:
+        if pg_val >= 30:
             signals.append(RiskSignal('净利润增长率', f'{pg_val:.2f}%', '低',
-                f'净利润增长 {pg_val:.2f}% > 20%，高增长'))
-        elif pg_val > 0:
+                f'净利润增长 {pg_val:.2f}% >= 30%，业绩高速增长'))
+        elif pg_val >= 10:
+            signals.append(RiskSignal('净利润增长率', f'{pg_val:.2f}%', '低',
+                f'净利润增长 {pg_val:.2f}% >= 10%，稳定增长'))
+        elif pg_val >= 0:
             signals.append(RiskSignal('净利润增长率', f'{pg_val:.2f}%', '中',
-                f'净利润增长 {pg_val:.2f}%，稳定增长'))
+                f'净利润增长 {pg_val:.2f}%，增长放缓'))
         else:
             signals.append(RiskSignal('净利润增长率', f'{pg_val:.2f}%', '高',
                 f'净利润增长 {pg_val:.2f}% < 0，业绩下滑'))
     
-    rg_val = safe_float(metrics.get('成长能力', {}).get('主营业务收入增长率(%)', [None])[0])
-    if rg_val is not None and rg_val < 0:
-        signals.append(RiskSignal('营收增长率', f'{rg_val:.2f}%', '高',
-            f'营收增长 {rg_val:.2f}% < 0，主营业务收缩'))
+    # ==================== 五、运营能力分析 ====================
+    
+    # 存货周转率
+    it_val = safe_float(data.inventory_turnover)
+    if it_val is None:
+        it_val = safe_float(metrics.get('运营能力', {}).get('存货周转率(次)', [None])[0])
+    
+    if it_val is not None:
+        if it_val >= 6:
+            signals.append(RiskSignal('存货周转率', f'{it_val:.2f}次', '低',
+                f'存货周转率 {it_val:.2f}次 >= 6，存货管理效率高'))
+        elif it_val >= 3:
+            signals.append(RiskSignal('存货周转率', f'{it_val:.2f}次', '中',
+                f'存货周转率 {it_val:.2f}次，存货管理效率一般'))
+        else:
+            signals.append(RiskSignal('存货周转率', f'{it_val:.2f}次', '高',
+                f'存货周转率 {it_val:.2f}次 < 3，存货积压风险'))
+    
+    # 应收账款周转率
+    ar_val = safe_float(data.accounts_receivable_turnover)
+    if ar_val is None:
+        ar_val = safe_float(metrics.get('运营能力', {}).get('应收账款周转率(次)', [None])[0])
+    
+    if ar_val is not None:
+        if ar_val >= 10:
+            signals.append(RiskSignal('应收账款周转率', f'{ar_val:.2f}次', '低',
+                f'应收账款周转率 {ar_val:.2f}次 >= 10，回款能力强'))
+        elif ar_val >= 5:
+            signals.append(RiskSignal('应收账款周转率', f'{ar_val:.2f}次', '中',
+                f'应收账款周转率 {ar_val:.2f}次，回款能力一般'))
+        else:
+            signals.append(RiskSignal('应收账款周转率', f'{ar_val:.2f}次', '高',
+                f'应收账款周转率 {ar_val:.2f}次 < 5，回款风险高'))
+    
+    # 总资产周转率
+    ta_val = safe_float(data.total_assets_turnover)
+    if ta_val is None:
+        ta_val = safe_float(metrics.get('运营能力', {}).get('总资产周转率(次)', [None])[0])
+    
+    if ta_val is not None:
+        if ta_val >= 1.0:
+            signals.append(RiskSignal('总资产周转率', f'{ta_val:.2f}次', '低',
+                f'总资产周转率 {ta_val:.2f}次 >= 1，资产运营效率高'))
+        elif ta_val >= 0.5:
+            signals.append(RiskSignal('总资产周转率', f'{ta_val:.2f}次', '中',
+                f'总资产周转率 {ta_val:.2f}次，资产运营效率一般'))
+        else:
+            signals.append(RiskSignal('总资产周转率', f'{ta_val:.2f}次', '高',
+                f'总资产周转率 {ta_val:.2f}次 < 0.5，资产运营效率低'))
+    
+    # 营业周期
+    oc_val = safe_float(data.operating_cycle)
+    if oc_val is None:
+        itd = safe_float(data.inventory_turnover_days)
+        ard = safe_float(data.accounts_receivable_turnover_days)
+        if itd and ard:
+            oc_val = itd + ard
+    
+    if oc_val is not None:
+        if oc_val <= 60:
+            signals.append(RiskSignal('营业周期', f'{oc_val:.0f}天', '低',
+                f'营业周期 {oc_val:.0f}天 <= 60天，资金周转快'))
+        elif oc_val <= 120:
+            signals.append(RiskSignal('营业周期', f'{oc_val:.0f}天', '中',
+                f'营业周期 {oc_val:.0f}天，资金周转一般'))
+        else:
+            signals.append(RiskSignal('营业周期', f'{oc_val:.0f}天', '高',
+                f'营业周期 {oc_val:.0f}天 > 120天，资金周转慢'))
+    
+    # ==================== 六、现金流质量分析 ====================
+    
+    # 净现比分析（核心指标 - 财务造假预警）
+    ncr_val = safe_float(data.net_cash_ratio)
+    if ncr_val is None:
+        cfps_val = safe_float(data.cfps)
+        eps_val = safe_float(data.eps)
+        if eps_val is None:
+            eps_val = safe_float(metrics.get('每股指标', {}).get('基本每股收益(元)', [None])[0])
+        if cfps_val is None:
+            cfps_val = safe_float(metrics.get('每股指标', {}).get('每股经营现金流(元)', [None])[0])
+        if eps_val and cfps_val and eps_val > 0:
+            ncr_val = cfps_val / eps_val
+    
+    if ncr_val is not None:
+        if ncr_val >= 1.2:
+            signals.append(RiskSignal('净现比', f'{ncr_val:.2f}', '低',
+                f'净现比 {ncr_val:.2f} >= 1.2，利润有充足现金支撑，质量高'))
+        elif ncr_val >= 1.0:
+            signals.append(RiskSignal('净现比', f'{ncr_val:.2f}', '低',
+                f'净现比 {ncr_val:.2f} >= 1，利润有现金支撑'))
+        elif ncr_val >= 0.7:
+            signals.append(RiskSignal('净现比', f'{ncr_val:.2f}', '中',
+                f'净现比 {ncr_val:.2f}，利润含金量一般，需关注'))
+        else:
+            signals.append(RiskSignal('净现比', f'{ncr_val:.2f}', '高',
+                f'净现比 {ncr_val:.2f} < 0.7，利润含金量低（马氏定律预警）'))
+    
+    # 销售现金比率
+    cts_val = safe_float(data.cash_to_sales)
+    if cts_val is not None:
+        if cts_val >= 1.1:
+            signals.append(RiskSignal('销售现金比率', f'{cts_val:.2f}', '低',
+                f'销售现金比率 {cts_val:.2f} >= 1.1，销售回款好'))
+        elif cts_val >= 1.0:
+            signals.append(RiskSignal('销售现金比率', f'{cts_val:.2f}', '中',
+                f'销售现金比率 {cts_val:.2f}，销售回款正常'))
+        else:
+            signals.append(RiskSignal('销售现金比率', f'{cts_val:.2f}', '高',
+                f'销售现金比率 {cts_val:.2f} < 1，应收款占比高'))
     
     return signals
 
@@ -581,7 +1078,7 @@ def generate_markdown_report(
     periods: List[str],
     pdf_extracted: bool
 ) -> str:
-    """生成 Markdown 格式的分析报告"""
+    """生成 Markdown 格式的分析报告 - 完整五维度分析"""
     lines = []
     
     # 标题
@@ -592,7 +1089,7 @@ def generate_markdown_report(
     lines.append("")
     
     # 数据来源声明
-    lines.append("## 数据来源声明")
+    lines.append("## 📊 数据来源声明")
     lines.append("")
     if pdf_extracted:
         lines.append("```")
@@ -602,14 +1099,14 @@ def generate_markdown_report(
         lines.append("```")
     else:
         lines.append("```")
-        lines.append("📊 数据来源: 网络公开财务数据")
+        lines.append("📈 数据来源: 网络公开财务数据")
         lines.append(f"   来源: {source}")
         lines.append(f"   报告期: {periods[0] if periods else 'N/A'}")
         lines.append("```")
     lines.append("")
     
     # 健康度评分
-    lines.append("## 财务健康度评分")
+    lines.append("## 🎯 财务健康度评分")
     lines.append("")
     score = health_score
     if score >= 80:
@@ -624,13 +1121,248 @@ def generate_markdown_report(
     lines.append(f"**{emoji} {score}/100 - {status}**")
     lines.append("")
     
-    # 核心财务数据（从 PDF 提取）
+    # ==================== 一、每股指标 ====================
+    lines.append("## 一、每股指标分析")
+    lines.append("")
+    lines.append("每股指标反映公司每股股票的盈利和净资产情况，是投资者关注的重点。")
+    lines.append("")
+    lines.append("| 指标 | 数值 | 分析 |")
+    lines.append("|------|------|------|")
+    
+    if data.eps is not None:
+        eps_analysis = "盈利能力强" if data.eps >= 1 else ("盈利能力一般" if data.eps >= 0.3 else "盈利能力弱")
+        lines.append(f"| 基本每股收益(EPS) | {data.eps:.4f} 元 | {eps_analysis} |")
+    
+    if data.diluted_eps is not None:
+        lines.append(f"| 稀释每股收益 | {data.diluted_eps:.4f} 元 | - |")
+    
+    if data.bvps is not None:
+        bvps_analysis = "净资产雄厚" if data.bvps >= 10 else ("净资产一般" if data.bvps >= 5 else "净资产较低")
+        lines.append(f"| 每股净资产(BPS) | {data.bvps:.4f} 元 | {bvps_analysis} |")
+    
+    if data.cfps is not None:
+        cfps_analysis = "现金流好" if data.cfps > 0 else "现金流需关注"
+        lines.append(f"| 每股经营现金流 | {data.cfps:.4f} 元 | {cfps_analysis} |")
+    
+    if data.retained_eps is not None:
+        lines.append(f"| 每股未分配利润 | {data.retained_eps:.4f} 元 | - |")
+    
+    lines.append("")
+    
+    # ==================== 二、盈利能力分析 ====================
+    lines.append("## 二、盈利能力分析")
+    lines.append("")
+    lines.append("盈利能力是公司持续经营的核心，反映公司创造利润的能力。")
+    lines.append("")
+    lines.append("| 指标 | 数值 | 行业标准 | 分析 |")
+    lines.append("|------|------|----------|------|")
+    
+    if data.roe is not None:
+        roe_analysis = "优秀(≥15%)" if data.roe >= 15 else ("一般(8-15%)" if data.roe >= 8 else "较弱(<8%)")
+        lines.append(f"| ROE(净资产收益率) | {data.roe:.2f}% | ≥15%优秀 | {roe_analysis} |")
+    
+    if data.roa is not None:
+        roa_analysis = "优秀(≥8%)" if data.roa >= 8 else ("一般(4-8%)" if data.roa >= 4 else "较弱(<4%)")
+        lines.append(f"| ROA(总资产收益率) | {data.roa:.2f}% | ≥8%优秀 | {roa_analysis} |")
+    
+    if data.gross_margin is not None:
+        gm_analysis = "竞争力强(≥40%)" if data.gross_margin >= 40 else ("竞争力一般(20-40%)" if data.gross_margin >= 20 else "竞争力弱(<20%)")
+        lines.append(f"| 销售毛利率 | {data.gross_margin:.2f}% | ≥40%优秀 | {gm_analysis} |")
+    
+    if data.net_margin is not None:
+        nm_analysis = "盈利质量好(≥10%)" if data.net_margin >= 10 else ("盈利质量一般(5-10%)" if data.net_margin >= 5 else "盈利质量差(<5%)")
+        lines.append(f"| 销售净利率 | {data.net_margin:.2f}% | ≥10%优秀 | {nm_analysis} |")
+    
+    if data.operating_margin is not None:
+        opm_analysis = "主业盈利强" if data.operating_margin >= 15 else ("主业盈利一般" if data.operating_margin >= 5 else "主业盈利弱")
+        lines.append(f"| 营业利润率 | {data.operating_margin:.2f}% | ≥15%优秀 | {opm_analysis} |")
+    
+    if data.roic is not None:
+        lines.append(f"| ROIC(投入资本回报率) | {data.roic:.2f}% | ≥10%优秀 | - |")
+    
+    lines.append("")
+    lines.append("### 📖 核心指标解读")
+    lines.append("")
+    lines.append("**ROE（净资产收益率）** - 巴菲特最看重的指标")
+    lines.append("```")
+    lines.append("ROE = 净利润 / 净资产 × 100%")
+    lines.append("")
+    lines.append("判断标准：")
+    lines.append("  ≥20%：优秀，具有持续竞争优势")
+    lines.append("  15-20%：良好，盈利能力较强")
+    lines.append("  8-15%：一般，需分析原因")
+    lines.append("  <8%：较弱，需重点关注")
+    lines.append("```")
+    lines.append("")
+    
+    # ==================== 三、偿债能力分析 ====================
+    lines.append("## 三、偿债能力分析")
+    lines.append("")
+    lines.append("偿债能力反映公司偿还债务的能力，是财务安全的重要保障。")
+    lines.append("")
+    lines.append("| 指标 | 数值 | 行业标准 | 分析 |")
+    lines.append("|------|------|----------|------|")
+    
+    if data.debt_ratio is not None:
+        debt_analysis = "稳健(≤60%)" if data.debt_ratio <= 60 else ("需关注(60-70%)" if data.debt_ratio <= 70 else "高风险(>70%)")
+        lines.append(f"| 资产负债率 | {data.debt_ratio:.2f}% | ≤60%稳健 | {debt_analysis} |")
+    
+    if data.current_ratio is not None:
+        cr_analysis = "良好(≥1.5)" if data.current_ratio >= 1.5 else ("尚可(1.0-1.5)" if data.current_ratio >= 1 else "压力大(<1.0)")
+        lines.append(f"| 流动比率 | {data.current_ratio:.2f} | ≥1.5良好 | {cr_analysis} |")
+    
+    if data.quick_ratio is not None:
+        qr_analysis = "充足(≥1.0)" if data.quick_ratio >= 1 else "需警惕(<1.0)"
+        lines.append(f"| 速动比率 | {data.quick_ratio:.2f} | ≥1.0充足 | {qr_analysis} |")
+    
+    if data.cash_ratio is not None:
+        lines.append(f"| 现金比率 | {data.cash_ratio:.2f} | ≥0.2安全 | - |")
+    
+    if data.interest_coverage is not None:
+        ic_analysis = "很强(≥5)" if data.interest_coverage >= 5 else ("尚可(3-5)" if data.interest_coverage >= 3 else "压力大(<3)")
+        lines.append(f"| 利息保障倍数 | {data.interest_coverage:.2f} | ≥5很强 | {ic_analysis} |")
+    
+    if data.debt_to_equity is not None:
+        lines.append(f"| 产权比率 | {data.debt_to_equity:.2f} | ≤1安全 | - |")
+    
+    if data.equity_multiplier is not None:
+        lines.append(f"| 权益乘数 | {data.equity_multiplier:.2f} | - | - |")
+    
+    lines.append("")
+    lines.append("### 📖 核心指标解读")
+    lines.append("")
+    lines.append("**杜邦分析 - ROE分解**")
+    lines.append("```")
+    lines.append("ROE = 净利率 × 总资产周转率 × 权益乘数")
+    lines.append("     = 净利率 × 总资产周转率 × (1 / (1 - 资产负债率))")
+    lines.append("")
+    lines.append("三个驱动因素：")
+    lines.append("  1. 净利率 → 盈利能力")
+    lines.append("  2. 总资产周转率 → 运营效率")
+    lines.append("  3. 权益乘数 → 财务杠杆")
+    lines.append("```")
+    lines.append("")
+    
+    # ==================== 四、成长能力分析 ====================
+    lines.append("## 四、成长能力分析")
+    lines.append("")
+    lines.append("成长能力反映公司的业务扩张和盈利增长潜力。")
+    lines.append("")
+    lines.append("| 指标 | 数值 | 行业标准 | 分析 |")
+    lines.append("|------|------|----------|------|")
+    
+    if data.revenue_growth is not None:
+        rg_analysis = "高增长(≥30%)" if data.revenue_growth >= 30 else ("稳定增长(10-30%)" if data.revenue_growth >= 10 else ("增长放缓(0-10%)" if data.revenue_growth >= 0 else "收缩(<0%)"))
+        lines.append(f"| 营业收入增长率 | {data.revenue_growth:.2f}% | ≥10%稳定 | {rg_analysis} |")
+    
+    if data.net_profit_growth is not None:
+        pg_analysis = "高增长(≥30%)" if data.net_profit_growth >= 30 else ("稳定增长(10-30%)" if data.net_profit_growth >= 10 else ("增长放缓(0-10%)" if data.net_profit_growth >= 0 else "下滑(<0%)"))
+        lines.append(f"| 净利润增长率 | {data.net_profit_growth:.2f}% | ≥10%稳定 | {pg_analysis} |")
+    
+    if data.operating_profit_growth is not None:
+        lines.append(f"| 营业利润增长率 | {data.operating_profit_growth:.2f}% | - | - |")
+    
+    if data.total_assets_growth is not None:
+        lines.append(f"| 总资产增长率 | {data.total_assets_growth:.2f}% | - | - |")
+    
+    if data.net_assets_growth is not None:
+        lines.append(f"| 净资产增长率 | {data.net_assets_growth:.2f}% | - | - |")
+    
+    if data.eps_growth is not None:
+        lines.append(f"| 每股收益增长率 | {data.eps_growth:.2f}% | - | - |")
+    
+    lines.append("")
+    
+    # ==================== 五、运营能力分析 ====================
+    lines.append("## 五、运营能力分析")
+    lines.append("")
+    lines.append("运营能力反映公司资产管理的效率，体现公司的经营水平。")
+    lines.append("")
+    lines.append("| 指标 | 数值 | 行业标准 | 分析 |")
+    lines.append("|------|------|----------|------|")
+    
+    if data.inventory_turnover is not None:
+        it_analysis = "效率高(≥6次)" if data.inventory_turnover >= 6 else ("效率一般(3-6次)" if data.inventory_turnover >= 3 else "积压风险(<3次)")
+        lines.append(f"| 存货周转率 | {data.inventory_turnover:.2f}次 | ≥6次高效 | {it_analysis} |")
+    
+    if data.inventory_turnover_days is not None:
+        lines.append(f"| 存货周转天数 | {data.inventory_turnover_days:.0f}天 | ≤60天良好 | - |")
+    
+    if data.accounts_receivable_turnover is not None:
+        ar_analysis = "回款强(≥10次)" if data.accounts_receivable_turnover >= 10 else ("回款一般(5-10次)" if data.accounts_receivable_turnover >= 5 else "回款风险(<5次)")
+        lines.append(f"| 应收账款周转率 | {data.accounts_receivable_turnover:.2f}次 | ≥10次良好 | {ar_analysis} |")
+    
+    if data.accounts_receivable_turnover_days is not None:
+        lines.append(f"| 应收账款周转天数 | {data.accounts_receivable_turnover_days:.0f}天 | ≤36天良好 | - |")
+    
+    if data.total_assets_turnover is not None:
+        ta_analysis = "效率高(≥1次)" if data.total_assets_turnover >= 1 else ("效率一般(0.5-1次)" if data.total_assets_turnover >= 0.5 else "效率低(<0.5次)")
+        lines.append(f"| 总资产周转率 | {data.total_assets_turnover:.2f}次 | ≥1次高效 | {ta_analysis} |")
+    
+    if data.fixed_assets_turnover is not None:
+        lines.append(f"| 固定资产周转率 | {data.fixed_assets_turnover:.2f}次 | - | - |")
+    
+    if data.accounts_payable_turnover is not None:
+        lines.append(f"| 应付账款周转率 | {data.accounts_payable_turnover:.2f}次 | - | - |")
+    
+    if data.operating_cycle is not None:
+        oc_analysis = "周转快(≤60天)" if data.operating_cycle <= 60 else ("周转一般(60-120天)" if data.operating_cycle <= 120 else "周转慢(>120天)")
+        lines.append(f"| 营业周期 | {data.operating_cycle:.0f}天 | ≤60天良好 | {oc_analysis} |")
+    
+    lines.append("")
+    lines.append("### 📖 核心指标解读")
+    lines.append("")
+    lines.append("**营业周期**")
+    lines.append("```")
+    lines.append("营业周期 = 存货周转天数 + 应收账款周转天数")
+    lines.append("")
+    lines.append("营业周期越短，资金周转越快，经营效率越高")
+    lines.append("```")
+    lines.append("")
+    
+    # ==================== 六、现金流质量分析 ====================
+    lines.append("## 六、现金流质量分析")
+    lines.append("")
+    lines.append("现金流质量是识别财务造假的核心指标，反映利润的含金量。")
+    lines.append("")
+    lines.append("| 指标 | 数值 | 行业标准 | 分析 |")
+    lines.append("|------|------|----------|------|")
+    
+    if data.net_cash_ratio is not None:
+        ncr_analysis = "质量高(≥1.2)" if data.net_cash_ratio >= 1.2 else ("质量良好(1.0-1.2)" if data.net_cash_ratio >= 1 else ("需关注(0.7-1.0)" if data.net_cash_ratio >= 0.7 else "⚠️预警(<0.7)"))
+        lines.append(f"| 净现比 | {data.net_cash_ratio:.2f} | ≥1.0健康 | {ncr_analysis} |")
+    
+    if data.cash_to_sales is not None:
+        cts_analysis = "回款好(≥1.1)" if data.cash_to_sales >= 1.1 else ("回款正常(1.0-1.1)" if data.cash_to_sales >= 1 else "应收款多(<1.0)")
+        lines.append(f"| 销售现金比率 | {data.cash_to_sales:.2f} | ≥1.0正常 | {cts_analysis} |")
+    
+    if data.cash_to_operating_profit is not None:
+        lines.append(f"| 经营现金流/营业利润 | {data.cash_to_operating_profit:.2f} | - | - |")
+    
+    lines.append("")
+    lines.append("### 📖 马氏定律（财务造假识别）")
+    lines.append("")
+    lines.append("```")
+    lines.append("净现比 = 经营活动现金流净额 / 净利润")
+    lines.append("")
+    lines.append("判断标准：")
+    lines.append("  ≥1.2：利润有充足现金支撑，质量高")
+    lines.append("  1.0-1.2：利润有现金支撑，质量良好")
+    lines.append("  0.7-1.0：利润含金量一般，需关注")
+    lines.append("  <0.7：⚠️ 利润含金量低，可能存在虚增利润")
+    lines.append("")
+    lines.append("【马氏定律】")
+    lines.append("长期净现比低于0.7，需警惕利润造假风险！")
+    lines.append("```")
+    lines.append("")
+    
+    # ==================== 核心财务数据 ====================
     if pdf_extracted:
-        lines.append("## 核心财务数据")
+        lines.append("## 📋 核心财务数据（PDF提取）")
         lines.append("")
         
         # 资产负债表
-        lines.append("### 资产负债表（单位：元）")
+        lines.append("### 资产负债表主要项目（单位：元）")
         lines.append("")
         lines.append("| 项目 | 金额 |")
         lines.append("|------|------|")
@@ -642,10 +1374,11 @@ def generate_markdown_report(
         lines.append(f"| 货币资金 | {format_large_number(data.cash)} |")
         lines.append(f"| 存货 | {format_large_number(data.inventory)} |")
         lines.append(f"| 应收账款 | {format_large_number(data.accounts_receivable)} |")
+        lines.append(f"| 固定资产 | {format_large_number(data.fixed_assets)} |")
         lines.append("")
         
         # 利润表
-        lines.append("### 利润表（单位：元）")
+        lines.append("### 利润表主要项目（单位：元）")
         lines.append("")
         lines.append("| 项目 | 金额 |")
         lines.append("|------|------|")
@@ -658,7 +1391,7 @@ def generate_markdown_report(
         lines.append("")
         
         # 现金流量表
-        lines.append("### 现金流量表（单位：元）")
+        lines.append("### 现金流量表主要项目（单位：元）")
         lines.append("")
         lines.append("| 项目 | 金额 |")
         lines.append("|------|------|")
@@ -667,69 +1400,15 @@ def generate_markdown_report(
         lines.append(f"| 筹资现金流 | {format_large_number(data.financing_cash_flow)} |")
         lines.append(f"| 自由现金流 | {format_large_number(data.free_cash_flow)} |")
         lines.append("")
-        
-        # 每股指标
-        lines.append("### 每股指标")
-        lines.append("")
-        lines.append("| 指标 | 数值 |")
-        lines.append("|------|------|")
-        lines.append(f"| 每股收益(EPS) | {data.eps:.4f} 元" if data.eps else "| 每股收益(EPS) | N/A |")
-        lines.append(f"| 每股净资产(BPS) | {data.bvps:.4f} 元" if data.bvps else "| 每股净资产(BPS) | N/A |")
-        lines.append(f"| 每股经营现金流 | {data.cfps:.4f} 元" if data.cfps else "| 每股经营现金流 | N/A |")
-        lines.append("")
     
-    # 计算指标
-    lines.append("## 计算财务指标")
-    lines.append("")
-    
-    lines.append("| 指标 | 数值 | 分析 |")
-    lines.append("|------|------|------|")
-    
-    # ROE
-    if data.roe is not None:
-        roe_analysis = "优秀" if data.roe >= 15 else ("一般" if data.roe >= 8 else "较弱")
-        lines.append(f"| ROE(净资产收益率) | {data.roe:.2f}% | {roe_analysis} |")
-    
-    # ROA
-    if data.roa is not None:
-        roa_analysis = "优秀" if data.roa >= 8 else ("一般" if data.roa >= 4 else "较弱")
-        lines.append(f"| ROA(总资产收益率) | {data.roa:.2f}% | {roa_analysis} |")
-    
-    # 毛利率
-    if data.gross_margin is not None:
-        gm_analysis = "竞争力强" if data.gross_margin >= 40 else ("一般" if data.gross_margin >= 20 else "竞争力弱")
-        lines.append(f"| 毛利率 | {data.gross_margin:.2f}% | {gm_analysis} |")
-    
-    # 净利率
-    if data.net_margin is not None:
-        nm_analysis = "盈利质量好" if data.net_margin >= 10 else ("一般" if data.net_margin >= 5 else "盈利质量差")
-        lines.append(f"| 净利率 | {data.net_margin:.2f}% | {nm_analysis} |")
-    
-    # 资产负债率
-    if data.debt_ratio is not None:
-        debt_analysis = "稳健" if data.debt_ratio <= 60 else ("需关注" if data.debt_ratio <= 70 else "高风险")
-        lines.append(f"| 资产负债率 | {data.debt_ratio:.2f}% | {debt_analysis} |")
-    
-    # 流动比率
-    if data.current_ratio is not None:
-        cr_analysis = "良好" if data.current_ratio >= 1.5 else "压力大"
-        lines.append(f"| 流动比率 | {data.current_ratio:.2f} | {cr_analysis} |")
-    
-    # 速动比率
-    if data.quick_ratio is not None:
-        qr_analysis = "充足" if data.quick_ratio >= 1 else "需警惕"
-        lines.append(f"| 速动比率 | {data.quick_ratio:.2f} | {qr_analysis} |")
-    
-    lines.append("")
-    
-    # 网络指标补充
+    # 历史指标对比
     if metrics:
-        lines.append("## 历史指标对比")
+        lines.append("## 📊 历史指标对比")
         lines.append("")
         
         period_header = " | ".join(periods[:4]) if periods else "N/A"
         
-        for category in ['每股指标', '盈利能力', '偿债能力', '成长能力']:
+        for category in ['每股指标', '盈利能力', '偿债能力', '成长能力', '运营能力']:
             if category in metrics and metrics[category]:
                 lines.append(f"### {category}")
                 lines.append("")
@@ -741,71 +1420,53 @@ def generate_markdown_report(
                     lines.append(f"| {name} | " + " | ".join(formatted) + " |")
                 lines.append("")
     
-    # 风险信号
-    lines.append("## 风险信号扫描")
+    # 风险信号汇总
+    lines.append("## ⚠️ 风险信号扫描")
     lines.append("")
     if risk_signals:
         lines.append("| 指标 | 当前值 | 风险等级 | 说明 |")
         lines.append("|------|--------|----------|------|")
         for signal in risk_signals:
-            level_mark = "⚠️" if signal.level == '高' else ("⚡" if signal.level == '中' else "✅")
+            level_mark = "🔴" if signal.level == '高' else ("🟡" if signal.level == '中' else "🟢")
             lines.append(f"| {signal.name} | {signal.value} | {level_mark} {signal.level} | {signal.description} |")
     else:
         lines.append("暂无风险信号")
     lines.append("")
     
     # 综合评估
-    lines.append("## 综合评估")
+    lines.append("## 📝 综合评估")
     lines.append("")
     
     positives = [s for s in risk_signals if s.level == '低']
     negatives = [s for s in risk_signals if s.level in ['中', '高']]
     
     if positives:
-        lines.append("### 有利因素")
+        lines.append("### ✅ 有利因素")
         lines.append("")
-        for s in positives[:5]:
-            lines.append(f"- ✅ {s.description}")
+        for s in positives[:8]:
+            lines.append(f"- {s.description}")
         lines.append("")
     
     if negatives:
-        lines.append("### 风险因素")
+        lines.append("### ⚠️ 风险因素")
         lines.append("")
-        for s in negatives[:5]:
-            mark = "⚠️" if s.level == '高' else "⚡"
+        for s in negatives[:8]:
+            mark = "🔴" if s.level == '高' else "🟡"
             lines.append(f"- {mark} {s.description}")
         lines.append("")
     
-    # 核心指标分析方法
-    lines.append("## 核心指标分析方法")
+    # 投资建议框架
+    lines.append("### 💡 分析建议")
     lines.append("")
-    
-    lines.append("### ROE（净资产收益率）")
-    lines.append("")
-    lines.append("ROE = 净利润 / 平均净资产 × 100%")
-    lines.append("")
-    lines.append("| ROE 水平 | 含义 |")
-    lines.append("|----------|------|")
-    lines.append("| ≥15% | 优秀：资本运用效率高，盈利能力强 |")
-    lines.append("| 8%-15% | 一般：盈利能力尚可，有提升空间 |")
-    lines.append("| <8% | 较弱：需关注盈利能力和资产效率 |")
-    lines.append("")
-    
-    lines.append("### 净现比（现金流质量）")
-    lines.append("")
-    lines.append("净现比 = 经营现金流净额 / 净利润")
-    lines.append("")
-    lines.append("| 净现比 | 含义 |")
-    lines.append("|--------|------|")
-    lines.append("| ≥1.0 | 健康：利润有现金支撑 |")
-    lines.append("| 0.7-1.0 | 关注：利润含金量一般 |")
-    lines.append("| <0.7 | 预警：利润含金量低，可能存在虚增 |")
-    lines.append("")
-    lines.append("**马氏定律**: 长期净现比低于0.7，可能存在利润造假。")
+    lines.append("1. **盈利能力**：关注 ROE 是否稳定在 15% 以上，毛利率是否高于行业平均")
+    lines.append("2. **偿债安全**：资产负债率控制在 60% 以内，流动比率保持在 1.5 以上")
+    lines.append("3. **成长潜力**：营收和净利润增长率持续为正，且高于行业平均")
+    lines.append("4. **现金流质量**：净现比长期高于 0.7，确保利润有现金支撑")
+    lines.append("5. **运营效率**：周转率指标保持稳定或改善趋势")
     lines.append("")
     
     # 风险提示
-    lines.append("## 风险提示")
+    lines.append("## ⚖️ 风险提示")
     lines.append("")
     lines.append("1. 本分析基于公开财务数据，可能存在信息滞后或不完整的情况。")
     lines.append("2. 财务指标异常不代表一定存在问题，需结合行业特性和公司战略综合判断。")
