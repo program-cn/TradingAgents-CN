@@ -37,6 +37,11 @@
       <template #title>股票筛选</template>
     </el-menu-item>
 
+    <el-menu-item index="/annual-report">
+      <el-icon><Notebook /></el-icon>
+      <template #title>年报分析</template>
+    </el-menu-item>
+
     <el-menu-item index="/favorites">
       <el-icon><Star /></el-icon>
       <template #title>我的自选股</template>
@@ -118,7 +123,8 @@ import {
   Setting,
   InfoFilled,
   CreditCard,
-  DataBoard
+  DataBoard,
+  Notebook
 } from '@element-plus/icons-vue'
 
 const route = useRoute()

@@ -91,6 +91,28 @@ const routes: RouteRecordRaw[] = [
       }
     ]
   },
+  {
+    path: '/annual-report',
+    name: 'AnnualReport',
+    component: () => import('@/layouts/BasicLayout.vue'),
+    meta: {
+      title: '年报分析',
+      icon: 'Document',
+      requiresAuth: true,
+      transition: 'slide-up'
+    },
+    children: [
+      {
+        path: '',
+        name: 'AnnualReportHome',
+        component: () => import('@/views/AnnualReport/index.vue'),
+        meta: {
+          title: '年报分析',
+          requiresAuth: true
+        }
+      }
+    ]
+  },
 
   {
     path: '/favorites',
