@@ -289,11 +289,13 @@ async def analyze_annual_report(
                 "name": result.name,
                 "periods": result.periods,
                 "metrics": result.metrics,
+                "financial_data": result.financial_data,
                 "risk_signals": result.risk_signals,
                 "health_score": result.health_score,
                 "report": result.report,
                 "source": result.source,
-                "analysis_time": result.analysis_time
+                "analysis_time": result.analysis_time,
+                "pdf_extracted": result.pdf_extracted
             }, message="分析完成")
             
         finally:
@@ -337,11 +339,13 @@ async def analyze_by_symbol(
             "name": result.name,
             "periods": result.periods,
             "metrics": result.metrics,
+            "financial_data": result.financial_data,
             "risk_signals": result.risk_signals,
             "health_score": result.health_score,
             "report": result.report,
             "source": result.source,
-            "analysis_time": result.analysis_time
+            "analysis_time": result.analysis_time,
+            "pdf_extracted": result.pdf_extracted
         }, message="分析完成")
         
     except Exception as e:
