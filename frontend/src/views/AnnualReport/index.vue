@@ -6,7 +6,7 @@
         <span class="page-title">📊 年报分析</span>
       </template>
       <template #extra>
-        <el-tag type="info">基于 PDF 财报深度解析</el-tag>
+        <el-tag type="info">五维度财务指标 + 风险预警</el-tag>
       </template>
     </el-page-header>
 
@@ -18,7 +18,7 @@
       class="risk-alert"
     >
       <template #title>
-        <strong>⚠️ 重要提示</strong>
+        <strong>重要提示</strong>
       </template>
       本功能基于公开财报数据进行分析，结果仅供参考，不构成投资建议。请结合多方面信息独立判断。
     </el-alert>
@@ -37,8 +37,8 @@
 
           <!-- 方式选择 -->
           <el-radio-group v-model="inputMode" class="mode-selector">
-            <el-radio-button label="search">🔍 搜索年报</el-radio-button>
-            <el-radio-button label="upload">📤 上传文件</el-radio-button>
+            <el-radio-button label="search">搜索年报</el-radio-button>
+            <el-radio-button label="upload">上传文件</el-radio-button>
           </el-radio-group>
 
           <!-- 搜索模式 -->
@@ -175,7 +175,7 @@
               class="history-item"
               @click="loadHistory(item)"
             >
-              <div class="history-title">{{ item.title }}</div>
+              <div class="history-title">{{ item.name }}({{ item.symbol }})</div>
               <div class="history-time">{{ item.time }}</div>
             </div>
           </el-scrollbar>
@@ -193,7 +193,7 @@
               </div>
               <div v-if="analysisResult">
                 <el-button type="primary" text @click="exportReport('markdown')">
-                  <el-icon><Download /></el-icon> 导出 Markdown
+                  <el-icon><Download /></el-icon> 导出
                 </el-button>
                 <el-button type="primary" text @click="copyToClipboard">
                   <el-icon><CopyDocument /></el-icon> 复制
@@ -223,31 +223,138 @@
           <div v-else class="analysis-result">
             <!-- 数据来源声明 -->
             <div class="source-declaration">
-              <el-tag type="success" effect="plain">
-                ✅ 数据来源：{{ analysisResult.source }}
-              </el-tag>
-              <span class="analysis-time">分析时间：{{ analysisResult.analysisTime }}</span>
+              <div>
+                <el-tag type="success" effect="plain">
+                  数据来源：{{ analysisResult.source }}
+                </el-tag>
+                <el-tag type="info" effect="plain" style="margin-left: 8px;">
+                  {{ analysisResult.symbol }} {{ analysisResult.name }}
+                </el-tag>
+              </div>
+              <span class="analysis-time">{{ analysisResult.analysis_time }}</span>
             </div>
 
-            <!-- 财务指标概览 -->
-            <el-card shadow="never" class="metrics-overview">
+            <!-- 健康度评分 -->
+            <el-card shadow="never" class="health-score-card">
+              <div class="health-score-container">
+                <div class="health-score-circle" :style="healthScoreStyle">
+                  <span class="health-score-value">{{ analysisResult.health_score }}</span>
+                </div>
+                <div class="health-score-info">
+                  <h3>财务健康度评分</h3>
+                  <p :class="healthScoreClass">{{ healthScoreText }}</p>
+                  <p class="health-desc">{{ healthScoreDesc }}</p>
+                </div>
+              </div>
+            </el-card>
+
+            <!-- 关键指标概览 -->
+            <el-card shadow="never" class="metrics-overview" v-if="keyMetrics.length > 0">
               <template #header>
-                <span>📊 关键财务指标</span>
+                <span>核心财务指标</span>
               </template>
               <el-row :gutter="16">
                 <el-col :span="6" v-for="metric in keyMetrics" :key="metric.name">
                   <div class="metric-card">
-                    <div class="metric-value" :style="{ color: metric.color }">
-                      {{ metric.value }}
-                    </div>
+                    <div class="metric-value">{{ metric.value }}</div>
                     <div class="metric-label">{{ metric.name }}</div>
                   </div>
                 </el-col>
               </el-row>
             </el-card>
 
+            <!-- 风险信号 -->
+            <el-card shadow="never" class="risk-signals-card" v-if="analysisResult.risk_signals?.length > 0">
+              <template #header>
+                <div class="risk-header">
+                  <span>风险信号扫描</span>
+                  <div class="risk-summary">
+                    <el-tag type="danger" size="small">{{ highRiskCount }} 高风险</el-tag>
+                    <el-tag type="warning" size="small">{{ midRiskCount }} 中风险</el-tag>
+                    <el-tag type="success" size="small">{{ lowRiskCount }} 正常</el-tag>
+                  </div>
+                </div>
+              </template>
+              <el-table :data="analysisResult.risk_signals" style="width: 100%" size="small">
+                <el-table-column prop="name" label="指标" width="140" />
+                <el-table-column prop="value" label="当前值" width="100" />
+                <el-table-column label="风险等级" width="100">
+                  <template #default="{ row }">
+                    <el-tag :type="getRiskTagType(row.level)" size="small">
+                      {{ row.level }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="description" label="说明" />
+              </el-table>
+            </el-card>
+
+            <!-- 财务指标详情 -->
+            <el-card shadow="never" class="metrics-detail-card">
+              <template #header>
+                <span>五维度财务指标</span>
+              </template>
+              <el-tabs v-model="activeMetricTab">
+                <el-tab-pane label="每股指标" name="每股指标">
+                  <el-table :data="getMetricsByCategory('每股指标')" size="small">
+                    <el-table-column prop="name" label="指标" width="180" />
+                    <el-table-column v-for="(period, idx) in analysisResult.periods" :key="idx" :label="period">
+                      <template #default="{ row }">
+                        {{ formatMetricValue(row.values[idx]) }}
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </el-tab-pane>
+                <el-tab-pane label="盈利能力" name="盈利能力">
+                  <el-table :data="getMetricsByCategory('盈利能力')" size="small">
+                    <el-table-column prop="name" label="指标" width="180" />
+                    <el-table-column v-for="(period, idx) in analysisResult.periods" :key="idx" :label="period">
+                      <template #default="{ row }">
+                        {{ formatMetricValue(row.values[idx]) }}
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </el-tab-pane>
+                <el-tab-pane label="偿债能力" name="偿债能力">
+                  <el-table :data="getMetricsByCategory('偿债能力')" size="small">
+                    <el-table-column prop="name" label="指标" width="180" />
+                    <el-table-column v-for="(period, idx) in analysisResult.periods" :key="idx" :label="period">
+                      <template #default="{ row }">
+                        {{ formatMetricValue(row.values[idx]) }}
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </el-tab-pane>
+                <el-tab-pane label="成长能力" name="成长能力">
+                  <el-table :data="getMetricsByCategory('成长能力')" size="small">
+                    <el-table-column prop="name" label="指标" width="180" />
+                    <el-table-column v-for="(period, idx) in analysisResult.periods" :key="idx" :label="period">
+                      <template #default="{ row }">
+                        {{ formatMetricValue(row.values[idx]) }}
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </el-tab-pane>
+                <el-tab-pane label="运营能力" name="运营能力">
+                  <el-table :data="getMetricsByCategory('运营能力')" size="small">
+                    <el-table-column prop="name" label="指标" width="180" />
+                    <el-table-column v-for="(period, idx) in analysisResult.periods" :key="idx" :label="period">
+                      <template #default="{ row }">
+                        {{ formatMetricValue(row.values[idx]) }}
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </el-tab-pane>
+              </el-tabs>
+            </el-card>
+
             <!-- 分析报告内容 -->
-            <div class="report-content markdown-content" v-html="renderMarkdown(analysisResult.report)"></div>
+            <el-card shadow="never" class="report-content-card">
+              <template #header>
+                <span>详细分析报告</span>
+              </template>
+              <div class="report-content markdown-content" v-html="renderMarkdown(analysisResult.report)"></div>
+            </el-card>
           </div>
         </el-card>
       </el-col>
@@ -284,6 +391,7 @@ const inputMode = ref<'search' | 'upload'>('search')
 const searching = ref(false)
 const analyzing = ref(false)
 const analysisProgress = ref(0)
+const activeMetricTab = ref('每股指标')
 
 // 搜索表单
 const searchForm = ref({
@@ -311,10 +419,83 @@ const analysisResult = ref<any>(null)
 // 历史记录
 const analysisHistory = ref<any[]>([])
 
-// 关键指标
+// 关键指标 - 从每股指标和盈利能力中提取
 const keyMetrics = computed(() => {
   if (!analysisResult.value?.metrics) return []
-  return analysisResult.value.metrics
+  
+  const metrics: any[] = []
+  
+  // EPS
+  const eps = analysisResult.value.metrics['每股指标']?.['摊薄每股收益(元)']?.[0]
+  if (eps) {
+    metrics.push({ name: '每股收益(EPS)', value: eps + '元' })
+  }
+  
+  // BPS
+  const bps = analysisResult.value.metrics['每股指标']?.['每股净资产_调整后(元)']?.[0]
+  if (bps) {
+    metrics.push({ name: '每股净资产(BPS)', value: bps + '元' })
+  }
+  
+  // ROE
+  const roe = analysisResult.value.metrics['盈利能力']?.['净资产收益率(%)']?.[0]
+  if (roe) {
+    metrics.push({ name: 'ROE', value: roe + '%' })
+  }
+  
+  // 毛利率
+  const grossMargin = analysisResult.value.metrics['盈利能力']?.['销售毛利率(%)']?.[0]
+  if (grossMargin) {
+    metrics.push({ name: '毛利率', value: grossMargin + '%' })
+  }
+  
+  return metrics.slice(0, 4)
+})
+
+// 健康度评分样式
+const healthScoreStyle = computed(() => {
+  const score = analysisResult.value?.health_score || 0
+  let color = '#F56C6C'
+  if (score >= 80) color = '#67C23A'
+  else if (score >= 60) color = '#E6A23C'
+  
+  return {
+    background: `conic-gradient(${color} ${score * 3.6}deg, #EBEEF5 0deg)`
+  }
+})
+
+const healthScoreClass = computed(() => {
+  const score = analysisResult.value?.health_score || 0
+  if (score >= 80) return 'health-high'
+  if (score >= 60) return 'health-medium'
+  return 'health-low'
+})
+
+const healthScoreText = computed(() => {
+  const score = analysisResult.value?.health_score || 0
+  if (score >= 80) return '财务健康'
+  if (score >= 60) return '财务一般'
+  return '财务风险'
+})
+
+const healthScoreDesc = computed(() => {
+  const score = analysisResult.value?.health_score || 0
+  if (score >= 80) return '各项指标表现良好，财务状况稳健'
+  if (score >= 60) return '部分指标需要关注，建议进一步分析'
+  return '存在多项风险信号，需要重点关注'
+})
+
+// 风险统计
+const highRiskCount = computed(() => {
+  return analysisResult.value?.risk_signals?.filter((r: any) => r.level === '高').length || 0
+})
+
+const midRiskCount = computed(() => {
+  return analysisResult.value?.risk_signals?.filter((r: any) => r.level === '中').length || 0
+})
+
+const lowRiskCount = computed(() => {
+  return analysisResult.value?.risk_signals?.filter((r: any) => r.level === '低').length || 0
 })
 
 // 是否可以分析
@@ -334,6 +515,28 @@ const renderMarkdown = (content: string) => {
   } catch (e) {
     return `<pre>${content}</pre>`
   }
+}
+
+// 获取风险标签类型
+const getRiskTagType = (level: string) => {
+  if (level === '高') return 'danger'
+  if (level === '中') return 'warning'
+  return 'success'
+}
+
+// 按类别获取指标
+const getMetricsByCategory = (category: string) => {
+  const metrics = analysisResult.value?.metrics?.[category] || {}
+  return Object.entries(metrics).map(([name, values]) => ({
+    name,
+    values: values as (string | null)[]
+  }))
+}
+
+// 格式化指标值
+const formatMetricValue = (value: string | null) => {
+  if (value === null || value === undefined) return 'N/A'
+  return value
 }
 
 // 返回
@@ -438,7 +641,8 @@ const startAnalysis = async () => {
       // 添加到历史记录
       analysisHistory.value.unshift({
         id: Date.now(),
-        title: result.data.title || '年报分析',
+        name: result.data.name,
+        symbol: result.data.symbol,
         time: new Date().toLocaleString(),
         result: result.data
       })
@@ -474,7 +678,7 @@ const exportReport = (format: string) => {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `年报分析_${new Date().toISOString().slice(0, 10)}.md`
+  a.download = `年报分析_${analysisResult.value.symbol}_${new Date().toISOString().slice(0, 10)}.md`
   a.click()
   URL.revokeObjectURL(url)
   ElMessage.success('导出成功')
@@ -645,6 +849,62 @@ onMounted(() => {
       }
     }
 
+    .health-score-card {
+      margin-bottom: 20px;
+
+      .health-score-container {
+        display: flex;
+        align-items: center;
+        gap: 32px;
+
+        .health-score-circle {
+          width: 120px;
+          height: 120px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+
+          &::before {
+            content: '';
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            background: var(--el-bg-color);
+            border-radius: 50%;
+          }
+
+          .health-score-value {
+            position: relative;
+            font-size: 32px;
+            font-weight: 700;
+            z-index: 1;
+          }
+        }
+
+        .health-score-info {
+          h3 {
+            font-size: 18px;
+            margin: 0 0 8px 0;
+          }
+
+          p {
+            margin: 4px 0;
+            font-size: 14px;
+          }
+
+          .health-high { color: #67C23A; font-weight: 600; }
+          .health-medium { color: #E6A23C; font-weight: 600; }
+          .health-low { color: #F56C6C; font-weight: 600; }
+
+          .health-desc {
+            color: var(--el-text-color-secondary);
+          }
+        }
+      }
+    }
+
     .metrics-overview {
       margin-bottom: 20px;
 
@@ -658,6 +918,7 @@ onMounted(() => {
           font-size: 24px;
           font-weight: 700;
           margin-bottom: 8px;
+          color: var(--el-color-primary);
         }
 
         .metric-label {
@@ -667,68 +928,89 @@ onMounted(() => {
       }
     }
 
-    .report-content {
-      line-height: 1.8;
+    .risk-signals-card {
+      margin-bottom: 20px;
 
-      :deep(h1), :deep(h2), :deep(h3) {
-        margin: 24px 0 16px 0;
-        color: var(--el-text-color-primary);
+      .risk-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .risk-summary {
+          display: flex;
+          gap: 8px;
+        }
       }
+    }
 
-      :deep(h1) { font-size: 22px; border-bottom: 1px solid var(--el-border-color); padding-bottom: 8px; }
-      :deep(h2) { font-size: 18px; }
-      :deep(h3) { font-size: 16px; }
+    .metrics-detail-card {
+      margin-bottom: 20px;
+    }
 
-      :deep(table) {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 16px 0;
+    .report-content-card {
+      .report-content {
+        line-height: 1.8;
 
-        th, td {
-          border: 1px solid var(--el-border-color);
-          padding: 10px 12px;
-          text-align: left;
+        :deep(h1), :deep(h2), :deep(h3) {
+          margin: 24px 0 16px 0;
+          color: var(--el-text-color-primary);
         }
 
-        th {
+        :deep(h1) { font-size: 22px; border-bottom: 1px solid var(--el-border-color); padding-bottom: 8px; }
+        :deep(h2) { font-size: 18px; }
+        :deep(h3) { font-size: 16px; }
+
+        :deep(table) {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 16px 0;
+
+          th, td {
+            border: 1px solid var(--el-border-color);
+            padding: 10px 12px;
+            text-align: left;
+          }
+
+          th {
+            background-color: var(--el-fill-color-light);
+            font-weight: 600;
+          }
+        }
+
+        :deep(ul), :deep(ol) {
+          padding-left: 24px;
+          margin: 12px 0;
+        }
+
+        :deep(li) {
+          margin: 6px 0;
+        }
+
+        :deep(blockquote) {
+          margin: 16px 0;
+          padding: 12px 16px;
           background-color: var(--el-fill-color-light);
-          font-weight: 600;
+          border-left: 4px solid var(--el-color-primary);
+          color: var(--el-text-color-regular);
         }
-      }
 
-      :deep(ul), :deep(ol) {
-        padding-left: 24px;
-        margin: 12px 0;
-      }
+        :deep(code) {
+          background-color: var(--el-fill-color-light);
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-family: 'Consolas', 'Monaco', monospace;
+        }
 
-      :deep(li) {
-        margin: 6px 0;
-      }
+        :deep(pre) {
+          background-color: var(--el-fill-color-darker);
+          padding: 16px;
+          border-radius: 8px;
+          overflow-x: auto;
 
-      :deep(blockquote) {
-        margin: 16px 0;
-        padding: 12px 16px;
-        background-color: var(--el-fill-color-light);
-        border-left: 4px solid var(--el-color-primary);
-        color: var(--el-text-color-regular);
-      }
-
-      :deep(code) {
-        background-color: var(--el-fill-color-light);
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-family: 'Consolas', 'Monaco', monospace;
-      }
-
-      :deep(pre) {
-        background-color: var(--el-fill-color-darker);
-        padding: 16px;
-        border-radius: 8px;
-        overflow-x: auto;
-
-        code {
-          background: none;
-          padding: 0;
+          code {
+            background: none;
+            padding: 0;
+          }
         }
       }
     }
