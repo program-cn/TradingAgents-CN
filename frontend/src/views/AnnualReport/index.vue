@@ -248,6 +248,60 @@
               </div>
             </el-card>
 
+            <!-- PDF 提取的财务数据 -->
+            <el-card shadow="never" class="financial-data-card" v-if="analysisResult.pdf_extracted && analysisResult.financial_data">
+              <template #header>
+                <div class="financial-header">
+                  <span>财务报表数据（从 PDF 提取）</span>
+                  <el-tag type="success" size="small">PDF 深度解析</el-tag>
+                </div>
+              </template>
+              <el-row :gutter="24">
+                <!-- 资产负债表 -->
+                <el-col :span="8">
+                  <h4>资产负债表</h4>
+                  <el-descriptions :column="1" size="small" border>
+                    <el-descriptions-item label="总资产">{{ formatLargeNumber(analysisResult.financial_data.total_assets) }}</el-descriptions-item>
+                    <el-descriptions-item label="总负债">{{ formatLargeNumber(analysisResult.financial_data.total_liabilities) }}</el-descriptions-item>
+                    <el-descriptions-item label="股东权益">{{ formatLargeNumber(analysisResult.financial_data.total_equity) }}</el-descriptions-item>
+                    <el-descriptions-item label="流动资产">{{ formatLargeNumber(analysisResult.financial_data.current_assets) }}</el-descriptions-item>
+                    <el-descriptions-item label="流动负债">{{ formatLargeNumber(analysisResult.financial_data.current_liabilities) }}</el-descriptions-item>
+                    <el-descriptions-item label="货币资金">{{ formatLargeNumber(analysisResult.financial_data.cash) }}</el-descriptions-item>
+                    <el-descriptions-item label="存货">{{ formatLargeNumber(analysisResult.financial_data.inventory) }}</el-descriptions-item>
+                    <el-descriptions-item label="应收账款">{{ formatLargeNumber(analysisResult.financial_data.accounts_receivable) }}</el-descriptions-item>
+                  </el-descriptions>
+                </el-col>
+                <!-- 利润表 -->
+                <el-col :span="8">
+                  <h4>利润表</h4>
+                  <el-descriptions :column="1" size="small" border>
+                    <el-descriptions-item label="营业收入">{{ formatLargeNumber(analysisResult.financial_data.revenue) }}</el-descriptions-item>
+                    <el-descriptions-item label="营业成本">{{ formatLargeNumber(analysisResult.financial_data.operating_cost) }}</el-descriptions-item>
+                    <el-descriptions-item label="毛利润">{{ formatLargeNumber(analysisResult.financial_data.gross_profit) }}</el-descriptions-item>
+                    <el-descriptions-item label="营业利润">{{ formatLargeNumber(analysisResult.financial_data.operating_profit) }}</el-descriptions-item>
+                    <el-descriptions-item label="净利润">{{ formatLargeNumber(analysisResult.financial_data.net_profit) }}</el-descriptions-item>
+                    <el-descriptions-item label="归属净利润">{{ formatLargeNumber(analysisResult.financial_data.net_profit_attr) }}</el-descriptions-item>
+                  </el-descriptions>
+                </el-col>
+                <!-- 现金流量表 -->
+                <el-col :span="8">
+                  <h4>现金流量表</h4>
+                  <el-descriptions :column="1" size="small" border>
+                    <el-descriptions-item label="经营现金流">{{ formatLargeNumber(analysisResult.financial_data.operating_cash_flow) }}</el-descriptions-item>
+                    <el-descriptions-item label="投资现金流">{{ formatLargeNumber(analysisResult.financial_data.investing_cash_flow) }}</el-descriptions-item>
+                    <el-descriptions-item label="筹资现金流">{{ formatLargeNumber(analysisResult.financial_data.financing_cash_flow) }}</el-descriptions-item>
+                    <el-descriptions-item label="自由现金流">{{ formatLargeNumber(analysisResult.financial_data.free_cash_flow) }}</el-descriptions-item>
+                  </el-descriptions>
+                  <h4 style="margin-top: 16px;">每股指标</h4>
+                  <el-descriptions :column="1" size="small" border>
+                    <el-descriptions-item label="每股收益">{{ formatNumber(analysisResult.financial_data.eps) }} 元</el-descriptions-item>
+                    <el-descriptions-item label="每股净资产">{{ formatNumber(analysisResult.financial_data.bvps) }} 元</el-descriptions-item>
+                    <el-descriptions-item label="每股现金流">{{ formatNumber(analysisResult.financial_data.cfps) }} 元</el-descriptions-item>
+                  </el-descriptions>
+                </el-col>
+              </el-row>
+            </el-card>
+
             <!-- 关键指标概览 -->
             <el-card shadow="never" class="metrics-overview" v-if="keyMetrics.length > 0">
               <template #header>
@@ -537,6 +591,29 @@ const getMetricsByCategory = (category: string) => {
 const formatMetricValue = (value: string | null) => {
   if (value === null || value === undefined) return 'N/A'
   return value
+}
+
+// 格式化大数字（转换为亿/万单位）
+const formatLargeNumber = (value: number | null | undefined) => {
+  if (value === null || value === undefined) return 'N/A'
+  const absVal = Math.abs(value)
+  const sign = value < 0 ? '-' : ''
+  
+  if (absVal >= 1e12) {
+    return `${sign}${(absVal / 1e12).toFixed(2)}万亿`
+  } else if (absVal >= 1e8) {
+    return `${sign}${(absVal / 1e8).toFixed(2)}亿`
+  } else if (absVal >= 1e4) {
+    return `${sign}${(absVal / 1e4).toFixed(2)}万`
+  } else {
+    return `${sign}${absVal.toFixed(2)}`
+  }
+}
+
+// 格式化普通数字
+const formatNumber = (value: number | null | undefined) => {
+  if (value === null || value === undefined) return 'N/A'
+  return value.toFixed(4)
 }
 
 // 返回
@@ -925,6 +1002,33 @@ onMounted(() => {
           font-size: 13px;
           color: var(--el-text-color-secondary);
         }
+      }
+    }
+
+    .financial-data-card {
+      margin-bottom: 20px;
+
+      .financial-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      h4 {
+        margin: 0 0 12px 0;
+        font-size: 14px;
+        color: var(--el-text-color-primary);
+        font-weight: 600;
+      }
+
+      :deep(.el-descriptions__label) {
+        width: 80px;
+        font-size: 12px;
+      }
+
+      :deep(.el-descriptions__content) {
+        font-size: 12px;
+        font-family: 'Consolas', 'Monaco', monospace;
       }
     }
 
