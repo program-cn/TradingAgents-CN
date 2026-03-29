@@ -372,14 +372,27 @@ const clearStocks = () => {
 // 初始化模型设置
 const initializeModelSettings = async () => {
   try {
-    // 获取默认模型
-    const defaultModels = await configApi.getDefaultModels()
-    modelSettings.value.quickAnalysisModel = defaultModels.quick_analysis_model
-    modelSettings.value.deepAnalysisModel = defaultModels.deep_analysis_model
-
     // 获取所有可用的模型列表
     const llmConfigs = await configApi.getLLMConfigs()
     availableModels.value = llmConfigs.filter((config: any) => config.enabled)
+
+    // 🆕 优先从 localStorage 读取上次选择的模型
+    const savedQuickModel = localStorage.getItem('batchAnalysis_quickModel')
+    const savedDeepModel = localStorage.getItem('batchAnalysis_deepModel')
+
+    if (savedQuickModel && savedDeepModel) {
+      modelSettings.value.quickAnalysisModel = savedQuickModel
+      modelSettings.value.deepAnalysisModel = savedDeepModel
+      console.log('✅ 从本地存储恢复模型设置:', {
+        quick: savedQuickModel,
+        deep: savedDeepModel
+      })
+    } else {
+      // 获取服务器默认模型
+      const defaultModels = await configApi.getDefaultModels()
+      modelSettings.value.quickAnalysisModel = defaultModels.quick_analysis_model
+      modelSettings.value.deepAnalysisModel = defaultModels.deep_analysis_model
+    }
 
     console.log('✅ 加载模型配置成功:', {
       quick: modelSettings.value.quickAnalysisModel,
@@ -393,6 +406,16 @@ const initializeModelSettings = async () => {
     modelSettings.value.deepAnalysisModel = 'qwen-max'
   }
 }
+
+// 🆕 监听模型设置变化，保存到 localStorage
+watch(
+  () => modelSettings.value,
+  (newSettings) => {
+    localStorage.setItem('batchAnalysis_quickModel', newSettings.quickAnalysisModel)
+    localStorage.setItem('batchAnalysis_deepModel', newSettings.deepAnalysisModel)
+  },
+  { deep: true }
+)
 
 // 页面初始化
 onMounted(async () => {
