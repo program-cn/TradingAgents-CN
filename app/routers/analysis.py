@@ -842,8 +842,23 @@ async def submit_batch_analysis(
 
         # 🔧 使用 asyncio.create_task 实现真正的并发执行
         # 不使用 BackgroundTasks，因为它是串行执行的
+        # 🆕 使用信号量控制并发数，避免 API 限流
+        from app.services.queue import DEFAULT_USER_CONCURRENT_LIMIT
+        MAX_CONCURRENT = DEFAULT_USER_CONCURRENT_LIMIT  # 默认3个并发
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT)
+        logger.info(f"🔧 [批量分析] 并发控制: 最多同时执行 {MAX_CONCURRENT} 个任务")
+
         async def run_concurrent_analysis():
-            """并发执行所有分析任务"""
+            """并发执行所有分析任务（带并发控制）"""
+            async def run_single_analysis(tid: str, req: SingleAnalysisRequest, uid: str):
+                async with semaphore:
+                    try:
+                        logger.info(f"🚀 [并发任务] 开始执行: {tid} - {req.stock_code}")
+                        await simple_service.execute_analysis_background(tid, uid, req)
+                        logger.info(f"✅ [并发任务] 执行完成: {tid}")
+                    except Exception as e:
+                        logger.error(f"❌ [并发任务] 执行失败: {tid}, 错误: {e}", exc_info=True)
+
             tasks = []
             for i, symbol in enumerate(stock_symbols):
                 task_id = task_ids[i]
@@ -868,15 +883,6 @@ async def submit_batch_analysis(
                     stock_code=symbol,
                     parameters=params
                 )
-
-                # 创建异步任务
-                async def run_single_analysis(tid: str, req: SingleAnalysisRequest, uid: str):
-                    try:
-                        logger.info(f"🚀 [并发任务] 开始执行: {tid} - {req.stock_code}")
-                        await simple_service.execute_analysis_background(tid, uid, req)
-                        logger.info(f"✅ [并发任务] 执行完成: {tid}")
-                    except Exception as e:
-                        logger.error(f"❌ [并发任务] 执行失败: {tid}, 错误: {e}", exc_info=True)
 
                 # 添加到任务列表
                 task = asyncio.create_task(run_single_analysis(task_id, single_req, user["id"]))
