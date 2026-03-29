@@ -58,3 +58,5 @@ concurrent-log-handler>=0.9.24  # Windows 友好的日志轮转处理器
 # PDF 解析
 PyMuPDF>=1.24.0  # PDF 文本提取
 pdfplumber>=0.11.0  # PDF 表格提取
+pdf2image>=1.16.0  # PDF 转图片
+pytesseract>=0.3.10  # OCR 文字识别
