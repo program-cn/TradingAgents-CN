@@ -64,8 +64,76 @@
 
               <!-- 股票预览 -->
               <div v-if="stockCodes.length > 0" class="stock-preview">
-                <h4>股票预览</h4>
-                <div class="stock-tags">
+                <div class="stock-preview-header">
+                  <h4>股票预览 ({{ stockCodes.length }}只)</h4>
+                  <div class="preview-actions">
+                    <el-tag v-if="validating" type="info" size="small">
+                      <el-icon class="is-loading"><Loading /></el-icon>
+                      验证中...
+                    </el-tag>
+                    <template v-else-if="validationResults.length > 0">
+                      <el-tag type="success" size="small">有效: {{ validCount }}</el-tag>
+                      <el-tag v-if="invalidCount > 0" type="danger" size="small">无效: {{ invalidCount }}</el-tag>
+                    </template>
+                  </div>
+                </div>
+                
+                <!-- 验证结果表格 -->
+                <div v-if="validationResults.length > 0" class="validation-table">
+                  <el-table 
+                    :data="validationResults" 
+                    stripe 
+                    size="small"
+                    max-height="350"
+                    style="width: 100%"
+                  >
+                    <el-table-column prop="symbol" label="股票代码" width="100" />
+                    <el-table-column prop="name" label="股票名称" min-width="140">
+                      <template #default="{ row }">
+                        <span :class="{ 'text-warning': !row.name || row.name === '未知股票' }">
+                          {{ row.name || '获取中...' }}
+                        </span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="market" label="市场" width="80">
+                      <template #default="{ row }">
+                        <el-tag 
+                          :type="row.market === 'A股' ? 'primary' : row.market === '港股' ? 'warning' : row.market === '美股' ? 'success' : 'info'"
+                          size="small"
+                        >
+                          {{ row.market }}
+                        </el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="is_valid" label="状态" width="60" align="center">
+                      <template #default="{ row }">
+                        <el-icon v-if="row.is_valid" color="#67c23a"><SuccessFilled /></el-icon>
+                        <el-icon v-else color="#f56c6c"><CircleCloseFilled /></el-icon>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="60" align="center">
+                      <template #default="{ $index }">
+                        <el-button 
+                          type="danger" 
+                          size="small" 
+                          text
+                          @click="removeStock($index)"
+                        >
+                          删除
+                        </el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+                
+                <!-- 验证中状态 -->
+                <div v-else-if="validating" class="validation-loading">
+                  <el-icon class="is-loading" size="20"><Loading /></el-icon>
+                  <span>正在验证股票代码...</span>
+                </div>
+                
+                <!-- 未验证时的简单标签展示 -->
+                <div v-else class="stock-tags">
                   <el-tag
                     v-for="(code, index) in stockCodes.slice(0, 20)"
                     :key="code"
@@ -290,9 +358,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Files, TrendCharts, Check, Close } from '@element-plus/icons-vue'
+import { Files, TrendCharts, Check, Close, SuccessFilled, CircleCloseFilled, Loading } from '@element-plus/icons-vue'
 import { ANALYSTS, DEFAULT_ANALYSTS, convertAnalystNamesToIds } from '@/constants/analysts'
 import { configApi } from '@/api/config'
 import { useRouter, useRoute } from 'vue-router'
@@ -310,6 +378,20 @@ const stockInput = ref('')
 const stockCodes = ref<string[]>([])  // 保留用于表单绑定
 const symbols = ref<string[]>([])     // 标准化后的代码列表
 const invalidCodes = ref<string[]>([])
+
+// 验证相关状态
+const validating = ref(false)
+const validationResults = ref<Array<{
+  symbol: string
+  name: string
+  market: string
+  is_valid: boolean
+  error_message?: string
+}>>([])
+
+// 验证统计
+const validCount = computed(() => validationResults.value.filter(v => v.is_valid).length)
+const invalidCount = computed(() => validationResults.value.filter(v => !v.is_valid).length)
 
 // 模型设置
 const modelSettings = ref({
@@ -342,6 +424,9 @@ const normalizeCodeSmart = (raw: string): { symbol?: string; error?: string } =>
   return { error: v.message || '代码格式无效' }
 }
 
+// 防抖定时器
+let validateTimer: ReturnType<typeof setTimeout> | null = null
+
 const parseStockCodes = () => {
   const codes = stockInput.value
     .split('\n')
@@ -360,6 +445,17 @@ const parseStockCodes = () => {
   stockCodes.value = normalized
   symbols.value = [...normalized]
   invalidCodes.value = invalid
+  
+  // 🔥 自动验证（防抖500ms）
+  if (normalized.length > 0) {
+    if (validateTimer) clearTimeout(validateTimer)
+    validateTimer = setTimeout(() => {
+      validateStocksWithApi()
+    }, 500)
+  } else {
+    // 清空验证结果
+    validationResults.value = []
+  }
 }
 
 const clearStocks = () => {
@@ -367,6 +463,7 @@ const clearStocks = () => {
   stockCodes.value = []
   symbols.value = []
   invalidCodes.value = []
+  validationResults.value = []  // 清空验证结果
 }
 
 // 初始化模型设置
@@ -465,6 +562,14 @@ const removeStock = (index: number) => {
   if (invalidIndex > -1) {
     invalidCodes.value.splice(invalidIndex, 1)
   }
+  
+  // 从验证结果中移除
+  if (validationResults.value.length > 0) {
+    const validationResultIndex = validationResults.value.findIndex(v => v.symbol === removedCode)
+    if (validationResultIndex > -1) {
+      validationResults.value.splice(validationResultIndex, 1)
+    }
+  }
 }
 
 const validateStocks = async () => {
@@ -484,6 +589,49 @@ const validateStocks = async () => {
     ElMessage.success('所有股票代码验证通过')
   } else {
     ElMessage.warning(`发现 ${invalid.length} 个无效股票代码`)
+  }
+}
+
+// 🔥 调用后端API验证股票代码，获取名称和市场
+const validateStocksWithApi = async () => {
+  if (stockCodes.value.length === 0) {
+    return
+  }
+  
+  validating.value = true
+  validationResults.value = []
+  
+  try {
+    // 使用 authStore 获取 token
+    const authStore = useAuthStore()
+    const token = authStore.token || localStorage.getItem('auth-token')
+    
+    const response = await fetch('/api/analysis/batch-validate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ symbols: stockCodes.value })
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    
+    const result = await response.json()
+    
+    if (result.success) {
+      validationResults.value = result.items
+      // 更新股票列表顺序（按验证结果）
+      stockCodes.value = result.items.map((item: any) => item.symbol)
+    } else {
+      console.error('验证失败:', result.message)
+    }
+  } catch (error: any) {
+    console.error('验证失败:', error)
+  } finally {
+    validating.value = false
   }
 }
 
@@ -762,6 +910,50 @@ const resetForm = () => {
       }
 
       .stock-preview {
+        .stock-preview-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+          
+          h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a202c;
+            margin: 0;
+          }
+        }
+        
+        .validation-table {
+          margin-bottom: 12px;
+          
+          .validation-summary {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            justify-content: flex-end;
+          }
+        }
+        
+        .validation-loading {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 16px;
+          color: #909399;
+          justify-content: center;
+        }
+        
+        .preview-actions {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+        
+        .text-warning {
+          color: #e6a23c;
+        }
+
         h4 {
           font-size: 16px;
           font-weight: 600;

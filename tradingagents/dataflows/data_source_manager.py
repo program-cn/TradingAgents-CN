@@ -1652,11 +1652,40 @@ class DataSourceManager:
         🔥 重要：AKShare 需要区分股票和指数
         - 对于 000001，如果不加后缀，会被识别为"深圳成指"（指数）
         - 对于股票，需要使用完整代码（如 sz000001 或 sh600000）
+        - 港股使用 stock_hk_spot 接口
         """
         try:
             import akshare as ak
 
-            # 🔥 转换为 AKShare 格式的股票代码
+            # 🔥 先判断是否是港股
+            from tradingagents.utils.stock_utils import StockUtils, StockMarket
+            market = StockUtils.identify_stock_market(symbol)
+            
+            if market == StockMarket.HONG_KONG:
+                # 港股：使用 stock_hk_spot 接口
+                logger.debug(f"📊 [AKShare港股信息] 港股代码: {symbol}")
+                try:
+                    from tradingagents.dataflows.providers.hk.improved_hk import get_hk_stock_info_akshare
+                    result = get_hk_stock_info_akshare(symbol)
+                    if result and result.get('name') and not result.get('name', '').startswith('港股'):
+                        return {
+                            'symbol': symbol,
+                            'name': result.get('name'),
+                            'area': '香港',
+                            'industry': result.get('industry', '未知'),
+                            'market': '港股',
+                            'list_date': '未知',
+                            'source': 'akshare_hk'
+                        }
+                except Exception as e:
+                    logger.warning(f"⚠️ [AKShare港股信息] 获取失败: {symbol}, 错误: {e}")
+                    return {'symbol': symbol, 'name': f'港股{symbol}', 'source': 'akshare_hk'}
+            
+            elif market == StockMarket.US:
+                # 美股：暂时返回默认值
+                return {'symbol': symbol, 'name': f'美股{symbol}', 'market': '美股', 'source': 'akshare_us'}
+
+            # 🔥 转换为 AKShare 格式的股票代码（A股）
             # AKShare 的 stock_individual_info_em 需要使用 "sz000001" 或 "sh600000" 格式
             if symbol.startswith('6'):
                 # 上海股票：600000 -> sh600000

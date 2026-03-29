@@ -769,6 +769,8 @@ class SimpleAnalysisService:
 
             try:
                 db = get_mongo_db()
+                # 🔥 从 parameters 中获取 market_type
+                market_type = request.parameters.market_type if request.parameters else "A股"
                 result = await db.analysis_tasks.update_one(
                     {"task_id": task_id},
                     {"$setOnInsert": {
@@ -777,6 +779,7 @@ class SimpleAnalysisService:
                         "stock_code": code,
                         "stock_symbol": code,
                         "stock_name": name,
+                        "market_type": market_type,  # 🔥 添加市场类型
                         "status": "pending",
                         "progress": 0,
                         "created_at": datetime.utcnow(),

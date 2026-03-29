@@ -816,11 +816,19 @@ async def submit_batch_analysis(
             else:
                 inferred_market_type = "A股"  # 默认
 
-            # 如果参数中没有指定市场类型，使用自动识别的结果
+            # 🔥 智能推断市场类型：
+            # 1. 如果参数中明确指定了非默认市场类型，使用用户指定的
+            # 2. 如果股票代码是港股/美股，自动覆盖默认的A股类型
             params = request.parameters.model_copy() if request.parameters else AnalysisParameters()
-            if not params.market_type:
-                params.market_type = inferred_market_type
-                logger.info(f"🔍 [批量分析] 股票 {symbol} 自动识别市场类型: {inferred_market_type}")
+            
+            # 判断是否需要自动推断市场类型
+            user_specified_market = request.parameters and request.parameters.market_type != "A股"
+            is_non_a_share = inferred_market_type in ["港股", "美股"]
+            
+            if not user_specified_market or is_non_a_share:
+                if params.market_type != inferred_market_type:
+                    params.market_type = inferred_market_type
+                    logger.info(f"🔍 [批量分析] 股票 {symbol} 自动识别市场类型: {inferred_market_type}")
 
             single_req = SingleAnalysisRequest(
                 symbol=symbol,
@@ -874,9 +882,16 @@ async def submit_batch_analysis(
                 else:
                     inferred_market_type = "A股"
 
+                # 🔥 智能推断市场类型（与创建任务时相同的逻辑）
                 params = request.parameters.model_copy() if request.parameters else AnalysisParameters()
-                if not params.market_type:
-                    params.market_type = inferred_market_type
+                
+                # 判断是否需要自动推断市场类型
+                user_specified_market = request.parameters and request.parameters.market_type != "A股"
+                is_non_a_share = inferred_market_type in ["港股", "美股"]
+                
+                if not user_specified_market or is_non_a_share:
+                    if params.market_type != inferred_market_type:
+                        params.market_type = inferred_market_type
 
                 single_req = SingleAnalysisRequest(
                     symbol=symbol,
@@ -911,6 +926,113 @@ async def submit_batch_analysis(
     except Exception as e:
         logger.error(f"❌ [批量分析] 提交失败: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
+
+class BatchValidateRequest(BaseModel):
+    """批量验证股票代码请求"""
+    symbols: List[str] = Field(..., description="股票代码列表")
+
+
+class StockValidationItem(BaseModel):
+    """单个股票验证结果"""
+    symbol: str
+    name: str
+    market: str
+    is_valid: bool
+    error_message: Optional[str] = None
+
+
+class BatchValidateResponse(BaseModel):
+    """批量验证响应"""
+    success: bool
+    total: int
+    valid_count: int
+    invalid_count: int
+    items: List[StockValidationItem]
+
+
+@router.post("/batch-validate", response_model=BatchValidateResponse)
+async def batch_validate_stocks(
+    request: BatchValidateRequest,
+    user: dict = Depends(get_current_user)
+):
+    """批量验证股票代码，返回股票名称和市场类型
+    
+    用于批量分析前的预验证，展示每只股票的：
+    - 股票代码
+    - 股票名称
+    - 市场类型（A股/港股/美股）
+    - 是否有效
+    """
+    from tradingagents.utils.stock_utils import StockUtils, StockMarket
+    from tradingagents.dataflows.data_source_manager import get_data_source_manager
+    
+    logger.info(f"🔍 [批量验证] 收到验证请求: {len(request.symbols)} 只股票")
+    
+    items = []
+    valid_count = 0
+    invalid_count = 0
+    
+    data_manager = get_data_source_manager()
+    
+    for symbol in request.symbols:
+        try:
+            # 识别市场类型
+            stock_market = StockUtils.identify_stock_market(symbol)
+            if stock_market == StockMarket.CHINA_A:
+                market = "A股"
+            elif stock_market == StockMarket.HONG_KONG:
+                market = "港股"
+            elif stock_market == StockMarket.US:
+                market = "美股"
+            else:
+                market = "A股"  # 默认
+            
+            # 获取股票名称
+            try:
+                stock_info = data_manager.get_stock_basic_info(symbol)
+                stock_name = stock_info.get("name", "") if stock_info else ""
+                
+                # 如果获取不到名称，尝试用验证器获取
+                if not stock_name or stock_name.startswith("股票") or stock_name.startswith("港股") or stock_name.startswith("美股"):
+                    from tradingagents.utils.stock_validator import prepare_stock_data_async
+                    result = await prepare_stock_data_async(symbol, market, 30, None)
+                    if result.is_valid:
+                        stock_name = result.stock_name
+                    else:
+                        stock_name = f"未知股票"
+            except Exception as e:
+                logger.warning(f"⚠️ [批量验证] 获取股票名称失败: {symbol}, {e}")
+                stock_name = f"未知股票"
+            
+            items.append(StockValidationItem(
+                symbol=symbol,
+                name=stock_name,
+                market=market,
+                is_valid=True
+            ))
+            valid_count += 1
+            
+        except Exception as e:
+            logger.error(f"❌ [批量验证] 验证失败: {symbol}, {e}")
+            items.append(StockValidationItem(
+                symbol=symbol,
+                name="",
+                market="未知",
+                is_valid=False,
+                error_message=str(e)
+            ))
+            invalid_count += 1
+    
+    logger.info(f"✅ [批量验证] 验证完成: 有效 {valid_count}, 无效 {invalid_count}")
+    
+    return BatchValidateResponse(
+        success=True,
+        total=len(request.symbols),
+        valid_count=valid_count,
+        invalid_count=invalid_count,
+        items=items
+    )
+
 
 # 兼容性：保留原有端点
 @router.post("/analyze")
