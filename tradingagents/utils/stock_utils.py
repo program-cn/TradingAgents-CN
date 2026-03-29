@@ -43,8 +43,9 @@ class StockUtils:
         if re.match(r'^\d{6}$', ticker):
             return StockMarket.CHINA_A
 
-        # 港股：4-5位数字.HK 或 纯4-5位数字（支持0700.HK、09988.HK、00700、9988格式）
-        if re.match(r'^\d{4,5}\.HK$', ticker) or re.match(r'^\d{4,5}$', ticker):
+        # 港股：1-5位数字.HK 或 纯1-5位数字
+        # 支持：0700.HK、09988.HK、00700、9988、700、1810 等格式
+        if re.match(r'^\d{1,5}\.HK$', ticker) or re.match(r'^\d{1,5}$', ticker):
             return StockMarket.HONG_KONG
 
         # 美股：1-5位字母

@@ -9,7 +9,7 @@
             批量分析
           </h1>
           <p class="page-description">
-            AI驱动的批量股票分析，高效处理多只股票
+            AI驱动的批量股票分析，自动识别A股、港股、美股市场，高效处理多只股票
           </p>
         </div>
       </div>
@@ -50,7 +50,7 @@
                   v-model="stockInput"
                   type="textarea"
                   :rows="8"
-                  placeholder="请输入股票代码，每行一个&#10;支持格式：&#10;000001&#10;000002.SZ&#10;600036.SH&#10;AAPL&#10;TSLA"
+                  placeholder="请输入股票代码，每行一个，自动识别市场&#10;A股：000001、600519（6位数字）&#10;港股：700、1810、9988（1-5位数字）&#10;美股：AAPL、TSLA（字母代码）"
                   @input="parseStockCodes"
                   class="stock-textarea"
                 />
