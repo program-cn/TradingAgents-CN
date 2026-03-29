@@ -44,13 +44,36 @@ class MongoDBCacheAdapter:
             logger.warning(f"⚠️ MongoDB连接初始化失败: {e}")
             self.use_app_cache = False
     
+    def _normalize_code_for_query(self, symbol: str) -> str:
+        """
+        根据市场类型规范化股票代码用于查询
+        
+        A股: 填充到6位 (如 600036, 000001)
+        港股: 保持原样 (如 700, 1810, 02533)
+        美股: 保持原样 (如 AAPL, MSFT)
+        """
+        try:
+            from tradingagents.utils.stock_utils import StockUtils, StockMarket
+            market = StockUtils.identify_stock_market(symbol)
+            
+            if market == StockMarket.CHINA_A:
+                # A股代码填充到6位
+                return str(symbol).zfill(6)
+            else:
+                # 港股和美股保持原样
+                return str(symbol)
+        except Exception:
+            # 降级：默认填充到6位（兼容旧逻辑）
+            return str(symbol).zfill(6)
+    
     def get_stock_basic_info(self, symbol: str) -> Optional[Dict[str, Any]]:
         """获取股票基础信息（按数据源优先级查询）"""
         if not self.use_app_cache or self.db is None:
             return None
 
         try:
-            code6 = str(symbol).zfill(6)
+            # 🔥 根据市场类型规范化代码（港股不填充）
+            normalized_code = self._normalize_code_for_query(symbol)
             collection = self.db.stock_basic_info
 
             # 🔥 获取数据源优先级
@@ -59,14 +82,14 @@ class MongoDBCacheAdapter:
             # 🔥 按优先级查询
             doc = None
             for src in source_priority:
-                doc = collection.find_one({"code": code6, "source": src}, {"_id": 0})
+                doc = collection.find_one({"code": normalized_code, "source": src}, {"_id": 0})
                 if doc:
                     logger.debug(f"✅ 从MongoDB获取基础信息: {symbol}, 数据源: {src}")
                     return doc
 
             # 如果所有数据源都没有，尝试不带 source 条件查询（兼容旧数据）
             if not doc:
-                doc = collection.find_one({"code": code6}, {"_id": 0})
+                doc = collection.find_one({"code": normalized_code}, {"_id": 0})
                 if doc:
                     logger.debug(f"✅ 从MongoDB获取基础信息（旧数据）: {symbol}")
                     return doc
@@ -175,7 +198,7 @@ class MongoDBCacheAdapter:
             return None
 
         try:
-            code6 = str(symbol).zfill(6)
+            normalized_code = self._normalize_code_for_query(symbol)
             collection = self.db.stock_daily_quotes
 
             # 获取数据源优先级
@@ -185,7 +208,7 @@ class MongoDBCacheAdapter:
             for data_source in priority_order:
                 # 构建查询条件
                 query = {
-                    "symbol": code6,
+                    "symbol": normalized_code,
                     "period": period,
                     "data_source": data_source  # 指定数据源
                 }
@@ -199,7 +222,7 @@ class MongoDBCacheAdapter:
                         query["trade_date"] = {"$lte": end_date}
 
                 # 查询数据
-                logger.debug(f"🔍 [MongoDB查询] 尝试数据源: {data_source}, symbol={code6}, period={period}")
+                logger.debug(f"🔍 [MongoDB查询] 尝试数据源: {data_source}, symbol={normalized_code}, period={period}")
                 cursor = collection.find(query, {"_id": 0}).sort("trade_date", 1)
                 data = list(cursor)
 
@@ -224,7 +247,7 @@ class MongoDBCacheAdapter:
             return None
 
         try:
-            code6 = str(symbol).zfill(6)
+            normalized_code = self._normalize_code_for_query(symbol)
             collection = self.db.stock_financial_data
 
             # 获取数据源优先级
@@ -234,7 +257,7 @@ class MongoDBCacheAdapter:
             for data_source in priority_order:
                 # 构建查询条件
                 query = {
-                    "code": code6,
+                    "code": normalized_code,
                     "data_source": data_source  # 指定数据源
                 }
                 if report_period:
@@ -267,8 +290,8 @@ class MongoDBCacheAdapter:
             # 构建查询条件
             query = {}
             if symbol:
-                code6 = str(symbol).zfill(6)
-                query["symbol"] = code6
+                normalized_code = self._normalize_code_for_query(symbol)
+                query["symbol"] = normalized_code
             
             # 时间范围
             if hours_back:
@@ -301,8 +324,8 @@ class MongoDBCacheAdapter:
             # 构建查询条件
             query = {}
             if symbol:
-                code6 = str(symbol).zfill(6)
-                query["symbol"] = code6
+                normalized_code = self._normalize_code_for_query(symbol)
+                query["symbol"] = normalized_code
             
             # 时间范围
             if hours_back:
@@ -330,11 +353,11 @@ class MongoDBCacheAdapter:
             return None
             
         try:
-            code6 = str(symbol).zfill(6)
+            normalized_code = self._normalize_code_for_query(symbol)
             collection = self.db.market_quotes
             
             # 获取最新行情
-            doc = collection.find_one({"code": code6}, {"_id": 0}, sort=[("timestamp", -1)])
+            doc = collection.find_one({"code": normalized_code}, {"_id": 0}, sort=[("timestamp", -1)])
             
             if doc:
                 logger.debug(f"✅ 从MongoDB获取行情数据: {symbol}")

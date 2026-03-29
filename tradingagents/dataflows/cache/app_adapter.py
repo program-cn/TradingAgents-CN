@@ -26,6 +26,29 @@ BASICS_COLLECTION = "stock_basic_info"
 QUOTES_COLLECTION = "market_quotes"
 
 
+def _normalize_code_for_query(symbol: str) -> str:
+    """
+    根据市场类型规范化股票代码用于查询
+    
+    A股: 填充到6位 (如 600036, 000001)
+    港股: 保持原样 (如 700, 1810, 02533)
+    美股: 保持原样 (如 AAPL, MSFT)
+    """
+    try:
+        from tradingagents.utils.stock_utils import StockUtils, StockMarket
+        market = StockUtils.identify_stock_market(symbol)
+        
+        if market == StockMarket.CHINA_A:
+            # A股代码填充到6位
+            return str(symbol).zfill(6)
+        else:
+            # 港股和美股保持原样
+            return str(symbol)
+    except Exception:
+        # 降级：默认填充到6位（兼容旧逻辑）
+        return str(symbol).zfill(6)
+
+
 def get_basics_from_cache(stock_code: Optional[str] = None) -> Optional[Dict[str, Any] | List[Dict[str, Any]]]:
     """从 app 的 stock_basic_info 读取基础信息。"""
     if get_mongodb_client is None:
@@ -45,16 +68,17 @@ def get_basics_from_cache(stock_code: Optional[str] = None) -> Optional[Dict[str
         db = client[db_name]
         coll = db[BASICS_COLLECTION]
         if stock_code:
-            code6 = str(stock_code).zfill(6)
+            # 🔥 根据市场类型规范化代码（港股不填充）
+            normalized_code = _normalize_code_for_query(stock_code)
             try:
-                _logger.debug(f"[app_cache] 查询基础信息 | db={db_name} coll={BASICS_COLLECTION} code={code6}")
+                _logger.debug(f"[app_cache] 查询基础信息 | db={db_name} coll={BASICS_COLLECTION} code={normalized_code}")
             except Exception:
                 pass
             # 同时查询 symbol 和 code 字段，确保兼容新旧数据格式
-            doc = coll.find_one({"$or": [{"symbol": code6}, {"code": code6}]})
+            doc = coll.find_one({"$or": [{"symbol": normalized_code}, {"code": normalized_code}]})
             if not doc:
                 try:
-                    _logger.debug(f"[app_cache] 基础信息未命中 | db={db_name} coll={BASICS_COLLECTION} code={code6}")
+                    _logger.debug(f"[app_cache] 基础信息未命中 | db={db_name} coll={BASICS_COLLECTION} code={normalized_code}")
                 except Exception:
                     pass
             return doc or None
@@ -83,21 +107,22 @@ def get_market_quote_dataframe(symbol: str) -> Optional[pd.DataFrame]:
         db_name = get_database_manager().mongodb_config.get("database", "tradingagents")
         db = client[db_name]
         coll = db[QUOTES_COLLECTION]
-        code = str(symbol).zfill(6)
+        # 🔥 根据市场类型规范化代码（港股不填充）
+        normalized_code = _normalize_code_for_query(symbol)
         try:
-            _logger.debug(f"[app_cache] 查询行情 | db={db_name} coll={QUOTES_COLLECTION} code={code}")
+            _logger.debug(f"[app_cache] 查询行情 | db={db_name} coll={QUOTES_COLLECTION} code={normalized_code}")
         except Exception:
             pass
-        doc = coll.find_one({"code": code})
+        doc = coll.find_one({"code": normalized_code})
         if not doc:
             try:
-                _logger.debug(f"[app_cache] 行情未命中 | db={db_name} coll={QUOTES_COLLECTION} code={code}")
+                _logger.debug(f"[app_cache] 行情未命中 | db={db_name} coll={QUOTES_COLLECTION} code={normalized_code}")
             except Exception:
                 pass
             return None
         # 构造 DataFrame，字段对齐 tushare 标准化映射
         row = {
-            "code": code,
+            "code": normalized_code,
             "date": doc.get("trade_date"),  # YYYYMMDD
             "open": doc.get("open"),
             "high": doc.get("high"),

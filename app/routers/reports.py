@@ -21,6 +21,28 @@ logger = logging.getLogger("webapi")
 # 股票名称缓存
 _stock_name_cache = {}
 
+def _normalize_stock_code(stock_code: str) -> str:
+    """
+    根据市场类型规范化股票代码用于查询
+    
+    A股: 填充到6位 (如 600036, 000001)
+    港股: 保持原样 (如 700, 1810, 02533)
+    美股: 保持原样 (如 AAPL, MSFT)
+    """
+    try:
+        from tradingagents.utils.stock_utils import StockUtils, StockMarket
+        market = StockUtils.identify_stock_market(stock_code)
+        
+        if market == StockMarket.CHINA_A:
+            # A股代码填充到6位
+            return str(stock_code).zfill(6)
+        else:
+            # 港股和美股保持原样
+            return str(stock_code)
+    except Exception:
+        # 降级：默认填充到6位（兼容旧逻辑）
+        return str(stock_code).zfill(6)
+
 def get_stock_name(stock_code: str) -> str:
     """
     获取股票名称
@@ -38,7 +60,8 @@ def get_stock_name(stock_code: str) -> str:
         from ..core.unified_config import UnifiedConfigManager
 
         db = get_mongo_db_sync()
-        code6 = str(stock_code).zfill(6)
+        # 🔥 根据市场类型规范化代码（港股不填充）
+        normalized_code = _normalize_stock_code(stock_code)
 
         # 🔥 按数据源优先级查询
         config = UnifiedConfigManager()
@@ -57,19 +80,19 @@ def get_stock_name(stock_code: str) -> str:
         stock_info = None
         for data_source in enabled_sources:
             stock_info = db.stock_basic_info.find_one(
-                {"$or": [{"symbol": code6}, {"code": code6}], "source": data_source}
+                {"$or": [{"symbol": normalized_code}, {"code": normalized_code}], "source": data_source}
             )
             if stock_info:
-                logger.debug(f"✅ 使用数据源 {data_source} 获取股票名称 {code6}")
+                logger.debug(f"✅ 使用数据源 {data_source} 获取股票名称 {normalized_code}")
                 break
 
         # 如果所有数据源都没有，尝试不带 source 条件查询（兼容旧数据）
         if not stock_info:
             stock_info = db.stock_basic_info.find_one(
-                {"$or": [{"symbol": code6}, {"code": code6}]}
+                {"$or": [{"symbol": normalized_code}, {"code": normalized_code}]}
             )
             if stock_info:
-                logger.warning(f"⚠️ 使用旧数据（无 source 字段）获取股票名称 {code6}")
+                logger.warning(f"⚠️ 使用旧数据（无 source 字段）获取股票名称 {normalized_code}")
 
         if stock_info and stock_info.get("name"):
             stock_name = stock_info["name"]
