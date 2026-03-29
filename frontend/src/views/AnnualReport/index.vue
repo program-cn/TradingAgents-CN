@@ -344,7 +344,7 @@
             </el-card>
 
             <!-- 五维度财务指标分析卡片 -->
-            <el-card shadow="never" class="five-dimension-card" v-if="analysisResult.financial_data">
+            <el-card shadow="never" class="five-dimension-card" v-if="hasFinancialMetrics">
               <template #header>
                 <div class="five-dimension-header">
                   <span>五维度财务指标分析</span>
@@ -353,7 +353,7 @@
               </template>
               
               <!-- 一、每股指标 -->
-              <div class="dimension-section">
+              <div class="dimension-section" v-if="perShareMetrics.length > 0">
                 <h4 class="dimension-title">
                   <span class="dimension-icon">📊</span>
                   一、每股指标
@@ -371,7 +371,7 @@
               </div>
               
               <!-- 二、盈利能力 -->
-              <div class="dimension-section">
+              <div class="dimension-section" v-if="profitabilityMetrics.length > 0">
                 <h4 class="dimension-title">
                   <span class="dimension-icon">💰</span>
                   二、盈利能力
@@ -389,7 +389,7 @@
               </div>
               
               <!-- 三、偿债能力 -->
-              <div class="dimension-section">
+              <div class="dimension-section" v-if="solvencyMetrics.length > 0">
                 <h4 class="dimension-title">
                   <span class="dimension-icon">🏦</span>
                   三、偿债能力
@@ -407,7 +407,7 @@
               </div>
               
               <!-- 四、成长能力 -->
-              <div class="dimension-section">
+              <div class="dimension-section" v-if="growthMetrics.length > 0">
                 <h4 class="dimension-title">
                   <span class="dimension-icon">📈</span>
                   四、成长能力
@@ -425,7 +425,7 @@
               </div>
               
               <!-- 五、运营能力 -->
-              <div class="dimension-section">
+              <div class="dimension-section" v-if="operationMetrics.length > 0">
                 <h4 class="dimension-title">
                   <span class="dimension-icon">⚙️</span>
                   五、运营能力
@@ -443,7 +443,7 @@
               </div>
               
               <!-- 六、现金流质量 -->
-              <div class="dimension-section">
+              <div class="dimension-section" v-if="cashFlowMetrics.length > 0">
                 <h4 class="dimension-title">
                   <span class="dimension-icon">💵</span>
                   六、现金流质量
@@ -462,13 +462,14 @@
             </el-card>
 
             <!-- 财务指标详情（历史对比） -->
-            <el-card shadow="never" class="metrics-detail-card">
+            <el-card shadow="never" class="metrics-detail-card" v-if="hasHistoricalMetrics">
               <template #header>
                 <span>历史财务指标对比</span>
+                <el-tag type="info" size="small" style="margin-left: 8px;">多期数据对比</el-tag>
               </template>
               <el-tabs v-model="activeMetricTab">
                 <el-tab-pane label="每股指标" name="每股指标">
-                  <el-table :data="getMetricsByCategory('每股指标')" size="small">
+                  <el-table :data="getMetricsByCategory('每股指标')" size="small" v-if="getMetricsByCategory('每股指标').length > 0">
                     <el-table-column prop="name" label="指标" width="180" />
                     <el-table-column v-for="(period, idx) in analysisResult.periods" :key="idx" :label="period">
                       <template #default="{ row }">
@@ -476,9 +477,10 @@
                       </template>
                     </el-table-column>
                   </el-table>
+                  <el-empty v-else description="暂无每股指标数据" :image-size="60" />
                 </el-tab-pane>
                 <el-tab-pane label="盈利能力" name="盈利能力">
-                  <el-table :data="getMetricsByCategory('盈利能力')" size="small">
+                  <el-table :data="getMetricsByCategory('盈利能力')" size="small" v-if="getMetricsByCategory('盈利能力').length > 0">
                     <el-table-column prop="name" label="指标" width="180" />
                     <el-table-column v-for="(period, idx) in analysisResult.periods" :key="idx" :label="period">
                       <template #default="{ row }">
@@ -486,9 +488,10 @@
                       </template>
                     </el-table-column>
                   </el-table>
+                  <el-empty v-else description="暂无盈利能力数据" :image-size="60" />
                 </el-tab-pane>
                 <el-tab-pane label="偿债能力" name="偿债能力">
-                  <el-table :data="getMetricsByCategory('偿债能力')" size="small">
+                  <el-table :data="getMetricsByCategory('偿债能力')" size="small" v-if="getMetricsByCategory('偿债能力').length > 0">
                     <el-table-column prop="name" label="指标" width="180" />
                     <el-table-column v-for="(period, idx) in analysisResult.periods" :key="idx" :label="period">
                       <template #default="{ row }">
@@ -496,9 +499,10 @@
                       </template>
                     </el-table-column>
                   </el-table>
+                  <el-empty v-else description="暂无偿债能力数据" :image-size="60" />
                 </el-tab-pane>
                 <el-tab-pane label="成长能力" name="成长能力">
-                  <el-table :data="getMetricsByCategory('成长能力')" size="small">
+                  <el-table :data="getMetricsByCategory('成长能力')" size="small" v-if="getMetricsByCategory('成长能力').length > 0">
                     <el-table-column prop="name" label="指标" width="180" />
                     <el-table-column v-for="(period, idx) in analysisResult.periods" :key="idx" :label="period">
                       <template #default="{ row }">
@@ -506,9 +510,10 @@
                       </template>
                     </el-table-column>
                   </el-table>
+                  <el-empty v-else description="暂无成长能力数据" :image-size="60" />
                 </el-tab-pane>
                 <el-tab-pane label="运营能力" name="运营能力">
-                  <el-table :data="getMetricsByCategory('运营能力')" size="small">
+                  <el-table :data="getMetricsByCategory('运营能力')" size="small" v-if="getMetricsByCategory('运营能力').length > 0">
                     <el-table-column prop="name" label="指标" width="180" />
                     <el-table-column v-for="(period, idx) in analysisResult.periods" :key="idx" :label="period">
                       <template #default="{ row }">
@@ -516,6 +521,7 @@
                       </template>
                     </el-table-column>
                   </el-table>
+                  <el-empty v-else description="暂无运营能力数据" :image-size="60" />
                 </el-tab-pane>
               </el-tabs>
             </el-card>
@@ -797,10 +803,25 @@ const solvencyMetrics = computed(() => {
   if (fd.interest_coverage != null) {
     let analysis = '压力大'
     let status = 'danger'
-    if (fd.interest_coverage >= 5) { analysis = '很强'; status = 'success' }
-    else if (fd.interest_coverage >= 3) { analysis = '尚可'; status = 'warning' }
-    else if (fd.interest_coverage >= 1) { analysis = '压力较大'; status = 'danger' }
-    metrics.push({ key: 'interest_coverage', name: '利息保障倍数', value: fd.interest_coverage.toFixed(2), analysis, status })
+    let displayValue = fd.interest_coverage.toFixed(2) + '倍'
+    
+    if (fd.interest_coverage >= 100) {
+      // 特殊值：表示几乎没有有息负债
+      analysis = '无有息负债'
+      status = 'success'
+      displayValue = '极高（无有息负债）'
+    } else if (fd.interest_coverage >= 5) { 
+      analysis = '很强'; 
+      status = 'success' 
+    } else if (fd.interest_coverage >= 3) { 
+      analysis = '尚可'; 
+      status = 'warning' 
+    } else if (fd.interest_coverage >= 1) { 
+      analysis = '压力较大'; 
+      status = 'danger' 
+    }
+    
+    metrics.push({ key: 'interest_coverage', name: '利息保障倍数', value: displayValue, analysis, status })
   }
   
   return metrics
@@ -944,6 +965,29 @@ const cashFlowMetrics = computed(() => {
   }
   
   return metrics
+})
+
+// 是否有五维度财务指标数据（用于条件显示）
+const hasFinancialMetrics = computed(() => {
+  return perShareMetrics.value.length > 0 ||
+         profitabilityMetrics.value.length > 0 ||
+         solvencyMetrics.value.length > 0 ||
+         growthMetrics.value.length > 0 ||
+         operationMetrics.value.length > 0 ||
+         cashFlowMetrics.value.length > 0
+})
+
+// 是否有历史指标数据（用于条件显示）
+const hasHistoricalMetrics = computed(() => {
+  if (!analysisResult.value?.periods?.length) return false
+  if (!analysisResult.value?.metrics) return false
+  
+  // 检查是否有任何一个类别有数据
+  const categories = ['每股指标', '盈利能力', '偿债能力', '成长能力', '运营能力']
+  return categories.some(cat => {
+    const catMetrics = analysisResult.value?.metrics?.[cat] || {}
+    return Object.keys(catMetrics).length > 0
+  })
 })
 
 // 风险统计
