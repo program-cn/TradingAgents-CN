@@ -101,7 +101,7 @@
                   :class="{ active: selectedReport === report }"
                   @click="selectReport(report)"
                 >
-                  <div class="report-title">{{ report.title }}</div>
+                  <div class="report-title" v-html="report.title"></div>
                   <div class="report-meta">
                     <el-tag size="small" type="info">{{ report.announce_date }}</el-tag>
                     <el-tag size="small">{{ report.year }}年</el-tag>

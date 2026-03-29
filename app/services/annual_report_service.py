@@ -2216,7 +2216,9 @@ def generate_markdown_report(
                 lines.append(f"### {category}")
                 lines.append("")
                 lines.append(f"| 指标 | {period_header} |")
-                lines.append("|------|" + "|".join(["------|"] * min(4, len(periods))))
+                # 修复表格分隔行格式：每列需要独立的 |------|
+                num_cols = min(4, len(periods)) + 1  # +1 是指标列
+                lines.append("|" + "|".join(["------"] * num_cols) + "|")
                 
                 for name, values in metrics[category].items():
                     formatted = [v if v else 'N/A' for v in values]

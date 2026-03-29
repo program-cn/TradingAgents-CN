@@ -590,12 +590,12 @@
   
                     <div v-if="analysisResults.summary" class="overview-summary">
                       <h5>分析摘要:</h5>
-                      <p>{{ analysisResults.summary }}</p>
+                      <div class="summary-content" v-html="formatReportContent(analysisResults.summary)"></div>
                     </div>
 
                     <div v-if="analysisResults.recommendation" class="overview-recommendation">
                       <h5>投资建议:</h5>
-                      <p>{{ analysisResults.recommendation }}</p>
+                      <div class="recommendation-content" v-html="formatReportContent(analysisResults.recommendation)"></div>
                     </div>
                   </div>
                 </div>
