@@ -76,6 +76,17 @@
           </el-button>
         </div>
         <div class="right">
+          <el-button-group v-if="selectedRows.length > 0" style="margin-right: 12px;">
+            <el-button type="warning" size="small" @click="batchMarkAsFailed">
+              标记失败 ({{ selectedRows.length }})
+            </el-button>
+            <el-button type="primary" size="small" @click="batchRetry">
+              重试 ({{ selectedRows.length }})
+            </el-button>
+            <el-button type="danger" size="small" @click="batchDelete">
+              删除 ({{ selectedRows.length }})
+            </el-button>
+          </el-button-group>
           <el-button @click="exportSelected" :disabled="selectedRows.length===0">
             <el-icon><Download /></el-icon>
             导出所选
@@ -369,7 +380,36 @@ const openReport = (row:any) => {
   router.push({ name: 'ReportDetail', params: { id } })
 }
 
-const retryTask = (row:any) => { ElMessage.info('重试功能待实现') }
+const retryTask = async (row: any) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要重试任务 "${row.stock_name || row.stock_code}" 吗？`,
+      '确认重试',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'info'
+      }
+    )
+
+    const taskId = row.task_id || row.analysis_id || row.id
+    if (!taskId) {
+      ElMessage.error('任务ID不存在')
+      return
+    }
+
+    loading.value = true
+    await analysisApi.retryTask(taskId)
+    ElMessage.success('任务已重新开始')
+    await loadList()
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error(e?.message || '重试失败')
+    }
+  } finally {
+    loading.value = false
+  }
+}
 
 // 显示错误详情
 const showErrorDetail = async (row: any) => {
@@ -466,6 +506,157 @@ const deleteTask = async (row: any) => {
   } catch (e: any) {
     if (e !== 'cancel') {
       ElMessage.error(e?.message || '删除失败')
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+// 批量标记失败
+const batchMarkAsFailed = async () => {
+  const runnableTasks = selectedRows.value.filter(row =>
+    row.status === 'processing' || row.status === 'running' || row.status === 'pending'
+  )
+
+  if (runnableTasks.length === 0) {
+    ElMessage.warning('没有可标记的任务（只能标记进行中的任务）')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要将选中的 ${runnableTasks.length} 个任务标记为失败吗？`,
+      '确认操作',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    loading.value = true
+    let successCount = 0
+    let failCount = 0
+
+    for (const row of runnableTasks) {
+      const taskId = row.task_id || row.analysis_id || row.id
+      if (!taskId) continue
+      try {
+        await analysisApi.markTaskAsFailed(taskId)
+        successCount++
+      } catch {
+        failCount++
+      }
+    }
+
+    if (successCount > 0) {
+      ElMessage.success(`已标记 ${successCount} 个任务为失败${failCount > 0 ? `，${failCount} 个失败` : ''}`)
+    } else {
+      ElMessage.error('批量标记失败')
+    }
+    await loadList()
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error(e?.message || '操作失败')
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+// 批量重试
+const batchRetry = async () => {
+  const failedTasks = selectedRows.value.filter(row => row.status === 'failed')
+
+  if (failedTasks.length === 0) {
+    ElMessage.warning('没有可重试的任务（只能重试失败的任务）')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要重试选中的 ${failedTasks.length} 个失败任务吗？`,
+      '确认重试',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'info'
+      }
+    )
+
+    loading.value = true
+    let successCount = 0
+    let failCount = 0
+
+    for (const row of failedTasks) {
+      const taskId = row.task_id || row.analysis_id || row.id
+      if (!taskId) continue
+      try {
+        await analysisApi.retryTask(taskId)
+        successCount++
+      } catch {
+        failCount++
+      }
+    }
+
+    if (successCount > 0) {
+      ElMessage.success(`已重试 ${successCount} 个任务${failCount > 0 ? `，${failCount} 个失败` : ''}`)
+    } else {
+      ElMessage.error('批量重试失败')
+    }
+    await loadList()
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error(e?.message || '操作失败')
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+// 批量删除
+const batchDelete = async () => {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要删除的任务')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedRows.value.length} 个任务吗？此操作不可恢复！`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'error'
+      }
+    )
+
+    loading.value = true
+    let successCount = 0
+    let failCount = 0
+
+    for (const row of selectedRows.value) {
+      const taskId = row.task_id || row.analysis_id || row.id
+      if (!taskId) continue
+      try {
+        await analysisApi.deleteTask(taskId)
+        successCount++
+      } catch {
+        failCount++
+      }
+    }
+
+    if (successCount > 0) {
+      ElMessage.success(`已删除 ${successCount} 个任务${failCount > 0 ? `，${failCount} 个失败` : ''}`)
+    } else {
+      ElMessage.error('批量删除失败')
+    }
+    selectedRows.value = []
+    await loadList()
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error(e?.message || '操作失败')
     }
   } finally {
     loading.value = false

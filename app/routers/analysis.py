@@ -1262,6 +1262,68 @@ async def mark_task_as_failed(
         raise HTTPException(status_code=500, detail=f"标记任务失败: {str(e)}")
 
 
+@router.post("/tasks/{task_id}/retry")
+async def retry_task(
+    task_id: str,
+    user: dict = Depends(get_current_user)
+):
+    """重试失败的任务
+
+    创建一个新的分析任务，使用原任务的参数
+    """
+    try:
+        from app.core.database import get_mongo_db
+
+        # 获取原任务信息
+        db = get_mongo_db()
+        original_task = await db.analysis_tasks.find_one({"task_id": task_id})
+
+        if not original_task:
+            raise HTTPException(status_code=404, detail="任务不存在")
+
+        # 创建新的分析任务
+        svc = get_simple_analysis_service()
+        symbol = original_task.get("stock_code") or original_task.get("symbol")
+        if not symbol:
+            raise HTTPException(status_code=400, detail="原任务缺少股票代码")
+
+        # 构建请求参数
+        from app.models.analysis import SingleAnalysisRequest, AnalysisParameters
+        params = AnalysisParameters()
+        if original_task.get("market_type"):
+            params.market_type = original_task.get("market_type")
+        if original_task.get("depth"):
+            params.depth = str(original_task.get("depth"))
+
+        single_req = SingleAnalysisRequest(
+            symbol=symbol,
+            stock_code=symbol,
+            parameters=params
+        )
+
+        # 创建新任务
+        create_res = await svc.create_analysis_task(user["id"], single_req)
+        new_task_id = create_res.get("task_id")
+
+        if not new_task_id:
+            raise HTTPException(status_code=500, detail="创建重试任务失败")
+
+        # 在后台执行新任务
+        asyncio.create_task(svc.execute_analysis_background(new_task_id, user["id"], single_req))
+
+        logger.info(f"✅ 任务 {task_id} 重试成功，新任务ID: {new_task_id}")
+        return {
+            "success": True,
+            "message": "任务重试成功",
+            "new_task_id": new_task_id
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ 重试任务失败: {e}")
+        raise HTTPException(status_code=500, detail=f"重试任务失败: {str(e)}")
+
+
 @router.delete("/tasks/{task_id}")
 async def delete_task(
     task_id: str,
