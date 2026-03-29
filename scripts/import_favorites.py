@@ -13,8 +13,9 @@ stocks = [
     {'stock_code': '002916', 'stock_name': '深南电路', 'market': 'A股'},
     {'stock_code': '600009', 'stock_name': '上海机场', 'market': 'A股'},
     {'stock_code': '600905', 'stock_name': '三峡能源', 'market': 'A股'},
-    {'stock_code': '601628', 'stock_name': '中国人寿', 'market': 'A股'},  # 修正
-    {'stock_code': '601828', 'stock_name': '交通银行', 'market': 'A股'},  # 修正
+    {'stock_code': '601328', 'stock_name': '交通银行', 'market': 'A股'},  # 交通银行
+    {'stock_code': '601628', 'stock_name': '中国人寿', 'market': 'A股'},  # 中国人寿
+    {'stock_code': '601828', 'stock_name': '美凯龙', 'market': 'A股'},    # 美凯龙
     {'stock_code': '1810', 'stock_name': '小米集团-W', 'market': '港股'},
     {'stock_code': '2202', 'stock_name': '万科企业', 'market': '港股'},
     {'stock_code': '3690', 'stock_name': '美团-W', 'market': '港股'},
