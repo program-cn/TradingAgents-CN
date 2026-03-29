@@ -443,9 +443,9 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
             # 港股代码转为大写，确保.HK后缀
             formatted_symbol = stock_symbol.upper()
             if not formatted_symbol.endswith('.HK'):
-                # 如果是纯数字，添加.HK后缀
+                # 如果是纯数字，添加.HK后缀（不填充0，保持用户输入原样）
                 if formatted_symbol.isdigit():
-                    formatted_symbol = f"{formatted_symbol.zfill(4)}.HK"
+                    formatted_symbol = f"{formatted_symbol}.HK"
             update_progress(f"🇭🇰 准备分析港股: {formatted_symbol}")
         else:
             # 美股代码转为大写

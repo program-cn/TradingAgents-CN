@@ -949,9 +949,8 @@ class StockDataPreparer:
 
         # 标准化港股代码格式
         if not stock_code.upper().endswith('.HK'):
-            # 移除前导0，然后补齐到4位
-            clean_code = stock_code.lstrip('0') or '0'  # 如果全是0，保留一个0
-            formatted_code = f"{clean_code.zfill(4)}.HK"
+            # 直接使用用户输入的代码，添加.HK后缀（不填充0）
+            formatted_code = f"{stock_code}.HK"
             logger.debug(f"🔍 [港股数据] 代码格式化: {stock_code} → {formatted_code}")
         else:
             formatted_code = stock_code.upper()
