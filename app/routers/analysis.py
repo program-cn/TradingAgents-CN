@@ -794,8 +794,8 @@ async def submit_batch_analysis(
         if not stock_symbols:
             raise ValueError("股票代码列表不能为空")
 
-        # 🔧 限制批量分析的股票数量（最多10个）
-        MAX_BATCH_SIZE = 10
+        # 🔧 限制批量分析的股票数量（最多20个）
+        MAX_BATCH_SIZE = 20
         if len(stock_symbols) > MAX_BATCH_SIZE:
             raise ValueError(f"批量分析最多支持 {MAX_BATCH_SIZE} 个股票，当前提交了 {len(stock_symbols)} 个")
 

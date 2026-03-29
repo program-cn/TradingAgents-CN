@@ -475,8 +475,8 @@ const submitBatchAnalysis = async () => {
     return
   }
 
-  if (stockCodes.value.length > 10) {
-    ElMessage.warning('单次批量分析最多支持10只股票，请减少股票数量')
+  if (stockCodes.value.length > 20) {
+    ElMessage.warning('单次批量分析最多支持20只股票，请减少股票数量')
     return
   }
 
