@@ -788,16 +788,16 @@ def validate_analysis_params(stock_symbol, analysis_date, analysts, research_dep
             if not re.match(r'^\d{6}$', symbol):
                 errors.append("A股代码格式错误，应为6位数字（如：000001）")
         elif market_type == "港股":
-            # 港股：4-5位数字.HK 或 纯4-5位数字
+            # 港股：1-5位数字.HK 或 纯1-5位数字
             import re
             symbol_upper = symbol.upper()
-            # 检查是否为 XXXX.HK 或 XXXXX.HK 格式
-            hk_format = re.match(r'^\d{4,5}\.HK$', symbol_upper)
-            # 检查是否为纯4-5位数字格式
-            digit_format = re.match(r'^\d{4,5}$', symbol)
+            # 检查是否为 X.HK 到 XXXXX.HK 格式
+            hk_format = re.match(r'^\d{1,5}\.HK$', symbol_upper)
+            # 检查是否为纯1-5位数字格式
+            digit_format = re.match(r'^\d{1,5}$', symbol)
 
             if not (hk_format or digit_format):
-                errors.append("港股代码格式错误，应为4位数字.HK（如：0700.HK）或4位数字（如：0700）")
+                errors.append("港股代码格式错误，应为1-5位数字（如：700、1810、9988）或带.HK后缀")
         elif market_type == "美股":
             # 美股：1-5位字母
             import re

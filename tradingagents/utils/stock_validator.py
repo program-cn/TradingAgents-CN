@@ -125,8 +125,9 @@ class StockDataPreparer:
                 )
         elif market_type == "港股":
             stock_code_upper = stock_code.upper()
-            hk_format = re.match(r'^\d{4,5}\.HK$', stock_code_upper)
-            digit_format = re.match(r'^\d{4,5}$', stock_code)
+            # 支持 1-5 位数字.HK 或 纯 1-5 位数字
+            hk_format = re.match(r'^\d{1,5}\.HK$', stock_code_upper)
+            digit_format = re.match(r'^\d{1,5}$', stock_code)
 
             if not (hk_format or digit_format):
                 return StockDataPreparationResult(
@@ -134,7 +135,7 @@ class StockDataPreparer:
                     stock_code=stock_code,
                     market_type="港股",
                     error_message="港股代码格式错误",
-                    suggestion="请输入4-5位数字.HK格式（如：0700.HK）或4-5位数字（如：0700）"
+                    suggestion="请输入1-5位数字（如：700、1810、9988）或带.HK后缀格式（如：0700.HK）"
                 )
         elif market_type == "美股":
             if not re.match(r'^[A-Z]{1,5}$', stock_code.upper()):
@@ -160,8 +161,8 @@ class StockDataPreparer:
         if re.match(r'^\d{6}$', stock_code):
             return "A股"
         
-        # 港股：4-5位数字.HK 或 纯4-5位数字
-        if re.match(r'^\d{4,5}\.HK$', stock_code) or re.match(r'^\d{4,5}$', stock_code):
+        # 港股：1-5位数字.HK 或 纯1-5位数字
+        if re.match(r'^\d{1,5}\.HK$', stock_code) or re.match(r'^\d{1,5}$', stock_code):
             return "港股"
         
         # 美股：1-5位字母

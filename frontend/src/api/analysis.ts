@@ -391,8 +391,9 @@ export const validateAnalysisRequest = (request: Partial<AnalysisRequest>): stri
         errors.push('A股代码格式不正确，应为6位数字')
       }
     } else if (request.market_type === '港股') {
-      if (!/^\d{4,5}\.HK$/.test(symbol)) {
-        errors.push('港股代码格式不正确，应为4-5位数字.HK')
+      // 支持 1-5 位数字或 X.HK 格式
+      if (!/^\d{1,5}(\.HK)?$/.test(symbol)) {
+        errors.push('港股代码格式不正确，应为1-5位数字（如：700、1810、9988）')
       }
     }
   }
